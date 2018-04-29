@@ -273,7 +273,7 @@ defmodule Crux.Gateway.Connection do
 
   # 11 - Heartbeat ack
   defp handle_packet(%{shard_id: shard_id} = state, %{op: 11}) do
-    Logger.debug("[Crux][Gatway][Shard #{shard_id}]: Received heartbeat ack")
+    Logger.debug("[Crux][Gateway][Shard #{shard_id}]: Received heartbeat ack")
     # TODO: Handle zombie / dead connections
     # https://discordapp.com/developers/docs/topics/gateway#heartbeating-example-gateway-heartbeat-ack
 
