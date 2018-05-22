@@ -48,7 +48,7 @@ defmodule Crux.Gateway.IdentifyLimiter do
 
   @doc false
   def init(:ok) do
-    Logger.debug("[Crux][Gateway][IdentifyLimiter]: Start")
+    Logger.debug("[Crux][Gateway][IdentifyLimiter]: Starting")
 
     # {timer_reference, ratelimit_reset}
     state = {nil, 0}
