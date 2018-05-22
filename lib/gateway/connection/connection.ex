@@ -69,12 +69,13 @@ defmodule Crux.Gateway.Connection do
   def handle_info(:stop, state), do: {:close, {1000, "Closing connection"}, state}
   def handle_info({:send, {_atom, _command} = data}, state), do: {:reply, data, state}
 
-  def handle_info(:heartbeat, %{shard_id: shard_id, seq: seq} = state) do
+  def handle_info(:heartbeat, %{shard_id: shard_id} = state) do
     Logger.debug(
-      "[Crux][Gateway][Shard #{shard_id}]: Sending heartbeat at seq #{Map.get(state, :seq)}"
+      "[Crux][Gateway][Shard #{shard_id}]: Sending heartbeat at seq #{Map.get(state, :seq, "nil")}"
     )
 
-    seq
+    state
+    |> Map.get(:seq)
     |> Command.heartbeat()
     |> send_command(shard_id)
 
