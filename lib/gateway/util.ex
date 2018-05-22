@@ -17,7 +17,8 @@ defmodule Crux.Gateway.Util do
   @doc """
     Atomifies all keys in a passed list or map to avoid the mess of mixed string and atom keys the gateway sends.
   """
-  @spec atomify(input :: map() | list()) :: map() | list()
+  @spec atomify(input :: struct() | map() | list()) :: map() | list()
+  def atomify(%{__struct__: _struct} = struct), do: struct |> Map.from_struct() |> atomify()
   def atomify(%{} = map), do: Map.new(map, &atomify_kv/1)
   def atomify(list) when is_list(list), do: Enum.map(list, &atomify/1)
   def atomify(other), do: other
