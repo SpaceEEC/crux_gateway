@@ -50,7 +50,10 @@ defmodule Crux.Gateway.IdentifyLimiter do
   def init(:ok) do
     Logger.debug("[Crux][Gateway][IdentifyLimiter]: Start")
 
-    {:ok, {nil, 0}}
+    # {timer_reference, ratelimit_reset}
+    state = {nil, 0}
+
+    {:ok, state}
   end
 
   @doc false
@@ -61,20 +64,20 @@ defmodule Crux.Gateway.IdentifyLimiter do
   end
 
   @doc false
-  def handle_call({:queue, packet}, _from, {nil, reset}) do
-    if reset > :os.system_time(:milli_seconds) do
-      :timer.sleep(reset - :os.system_time(:milli_seconds))
+  def handle_call({:queue, packet}, _from, {nil, ratelimit_reset}) do
+    if ratelimit_reset > :os.system_time(:milli_seconds) do
+      :timer.sleep(ratelimit_reset - :os.system_time(:milli_seconds))
     end
 
     Logger.debug("[Crux][Gateway][IdentifyLimiter]: Sending identify")
-    {:ok, ref} = :timer.send_after(@timeout, :stop)
+    {:ok, timer_reference} = :timer.send_after(@timeout, :stop)
 
-    {:reply, packet, {:os.system_time(:milli_seconds) + @timeout, ref}}
+    {:reply, packet, {timer_reference, :os.system_time(:milli_seconds) + @timeout}}
   end
 
-  def handle_call({:queue, _packet} = message, from, {timer, reset}) do
-    :timer.cancel(timer)
+  def handle_call({:queue, _packet} = message, from, {timer_reference, ratelimit_reset}) do
+    :timer.cancel(timer_reference)
 
-    handle_call(message, from, {nil, reset})
+    handle_call(message, from, {nil, ratelimit_reset})
   end
 end
