@@ -6,7 +6,7 @@ defmodule Crux.Gateway.MixProject do
       start_permanent: Mix.env() == :prod,
       package: package(),
       app: :crux_gateway,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.6",
       description: "Package providing a flexible gateway connection to the Discord API.",
       source_url: "https://github.com/SpaceEEC/crux_gateway/",
