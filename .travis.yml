@@ -1,0 +1,17 @@
+sudo: false
+
+language: elixir
+elixir: '1.6.4'
+otp_release: '20.3'
+
+script:
+  - mix format --check-formatted
+  - mix test
+
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: bash deploy/deploy.sh
+  on:
+    tags: true
+    branch: master
