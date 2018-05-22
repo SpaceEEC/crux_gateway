@@ -26,7 +26,8 @@ defmodule Crux.Gateway.Connection.Producer do
     Application.fetch_env!(:crux_gateway, :shards)
     |> Map.new(fn shard_id ->
       pid =
-        with [{pid, _other}] when is_pid(pid) <- Registry.lookup(@registry, {shard_id, :producer}),
+        with [{pid, _other}] when is_pid(pid) <-
+               Registry.lookup(@registry, {shard_id, :producer}),
              true <- Process.alive?(pid) do
           pid
         else

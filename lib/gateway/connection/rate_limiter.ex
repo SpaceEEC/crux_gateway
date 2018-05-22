@@ -35,7 +35,8 @@ defmodule Crux.Gateway.Connection.RateLimiter do
   """
   @spec queue(packet :: term, shard_id :: non_neg_integer) :: term
   def queue(packet, shard_id) do
-    with [{pid, _other}] when is_pid(pid) <- Registry.lookup(@registry, {shard_id, :rate_limiter}),
+    with [{pid, _other}] when is_pid(pid) <-
+           Registry.lookup(@registry, {shard_id, :rate_limiter}),
          true <- Process.alive?(pid) do
       GenServer.call(pid, {:queue, packet}, :infinity)
     else
