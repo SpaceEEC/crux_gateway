@@ -179,7 +179,7 @@ defmodule Crux.Gateway.Connection do
 
   # 1 - Heartbeat
   defp handle_packet(state, %{op: 1}) do
-    {:ok, state} = handle_info(:hearbeat, state)
+    {:ok, state} = handle_info(:heartbeat, state)
 
     state
   end
