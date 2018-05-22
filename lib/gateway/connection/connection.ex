@@ -225,7 +225,7 @@ defmodule Crux.Gateway.Connection do
         state
         |> Command.identify()
         |> RateLimiter.queue(shard_id)
-        |> Crux.Gateway.IdentifyLimiter.queue()
+        |> Crux.Gateway.IdentifyLimiter.queue(shard_id)
 
       WebSockex.send_frame(pid, command)
     end)
@@ -257,7 +257,7 @@ defmodule Crux.Gateway.Connection do
             state
             |> Command.identify()
             |> RateLimiter.queue(shard_id)
-            |> Crux.Gateway.IdentifyLimiter.queue()
+            |> Crux.Gateway.IdentifyLimiter.queue(shard_id)
 
           WebSockex.send_frame(pid, command)
         end)

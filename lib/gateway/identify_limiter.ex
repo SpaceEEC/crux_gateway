@@ -26,11 +26,11 @@ defmodule Crux.Gateway.IdentifyLimiter do
 
     Automatically used by `Crux.Gateway.Connection`.
   """
-  @spec queue(packet :: term) :: term
-  def queue(packet) do
+  @spec queue(packet :: term(), shard_id :: non_neg_integer()) :: term()
+  def queue(packet, shard_id \\ nil) do
     case GenServer.whereis(__MODULE__) do
       pid when is_pid(pid) ->
-        GenServer.call(pid, {:queue, packet}, :infinity)
+        GenServer.call(pid, {:queue, {packet, shard_id}}, :infinity)
 
       _ ->
         Supervisor.start_child(
@@ -42,7 +42,7 @@ defmodule Crux.Gateway.IdentifyLimiter do
           )
         )
 
-        queue(packet)
+        queue(packet, shard_id)
     end
   end
 
@@ -64,12 +64,12 @@ defmodule Crux.Gateway.IdentifyLimiter do
   end
 
   @doc false
-  def handle_call({:queue, packet}, _from, {nil, ratelimit_reset}) do
+  def handle_call({:queue, {packet, shard_id}}, _from, {nil, ratelimit_reset}) do
     if ratelimit_reset > :os.system_time(:milli_seconds) do
       :timer.sleep(ratelimit_reset - :os.system_time(:milli_seconds))
     end
 
-    Logger.debug("[Crux][Gateway][IdentifyLimiter]: Sending identify")
+    Logger.debug("[Crux][Gateway][IdentifyLimiter]: Sending identify for shard #{shard_id}")
     {:ok, timer_reference} = :timer.send_after(@timeout, :stop)
 
     {:reply, packet, {timer_reference, :os.system_time(:milli_seconds) + @timeout}}
