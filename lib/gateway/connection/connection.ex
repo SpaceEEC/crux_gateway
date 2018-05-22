@@ -111,7 +111,7 @@ defmodule Crux.Gateway.Connection do
 
   @doc false
   def terminate(reason, %{shard_id: shard_id}) do
-    Logger.warn("[Crux][Gateway][Shard #{shard_id}]: Terminating duo #{inspect(reason)}")
+    Logger.warn("[Crux][Gateway][Shard #{shard_id}]: Terminating due to #{inspect(reason)}")
   end
 
   @doc false
