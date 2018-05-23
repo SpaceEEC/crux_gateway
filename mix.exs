@@ -1,28 +1,33 @@
 defmodule Crux.Gateway.MixProject do
   use Mix.Project
 
+  @vsn "0.1.1"
+  @name :crux_gateway
+
   def project do
     [
       start_permanent: Mix.env() == :prod,
       package: package(),
-      app: :crux_gateway,
-      version: "0.1.1",
+      app: @name,
+      version: @vsn,
       elixir: "~> 1.6",
       description: "Package providing a flexible gateway connection to the Discord API.",
-      source_url: "https://github.com/SpaceEEC/crux_gateway/",
-      homepage_url: "https://github.com/SpaceEEC/crux_gateway/",
+      source_url: "https://github.com/SpaceEEC/#{@name}/",
+      homepage_url: "https://github.com/SpaceEEC/#{@name}/",
       deps: deps()
     ]
   end
 
   def package do
     [
-      name: :crux_gateway,
+      name: @name,
       licenses: ["MIT"],
       maintainers: ["SpaceEEC"],
       links: %{
-        "GitHub" => "https://github.com/SpaceEEC/crux_gateway/",
-        "Docs" => "https://hexdocs.pm/crux_gateway/"
+        "GitHub" => "https://github.com/SpaceEEC/#{@name}/",
+        "Changelog" => "https://github.com/SpaceEEC/#{@name}/releases/tag/#{@vsn}/",
+        "Documentation" => "https://hexdocs.pm/#{@name}/"
+        "Unified Development Documentation" => "https://crux.randomly.space/"
       }
     ]
   end
