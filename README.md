@@ -2,20 +2,34 @@
 
 Package providing a flexible gateway connection to the Discord API.
 
+## Useful links
+
+ - [Latest Release Documentation](https://hexdocs.pm/crux_gateway/)
+ - [Github](https://github.com/SpaceEEC/crux_gateway/)
+ - [Changelog](https://github.com/SpaceEEC/crux_gateway/releases/tag/0.1.1/)
+ - [Development Documentation](https://crux.randomly.space/)
+
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `crux_gateway` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `crux_gateway` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:crux_gateway, "~> 0.1.0"}
+    {:crux_gateway, "~> 0.1.1"}
   ]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/crux_gateway](https://hexdocs.pm/crux_gateway).
 
+## Usage
+
+For example:
+
+```elixir
+  iex> Crux.Gateway.start(%{
+  ...>   token: "your token goes, for example, here",
+  ...>   url: "wss://discord.gg",
+  ...>   shard_count: 1
+  ...> })
+```
