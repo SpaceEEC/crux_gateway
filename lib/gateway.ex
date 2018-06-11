@@ -42,6 +42,8 @@ defmodule Crux.Gateway do
   """
   @spec start(args :: gateway_options) :: [Supervisor.on_start_child()]
   def start(args \\ %{}) do
+    :application.ensure_started(:crux_gateway)
+
     producer = Map.get(args, :dispatcher, GenStage.BroadcastDispatcher)
     Application.put_env(:crux_gateway, :dispatcher, producer)
 
