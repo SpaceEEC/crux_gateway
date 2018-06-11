@@ -10,6 +10,8 @@ defmodule Crux.Gateway.Connection do
 
   require Logger
 
+  @heartbeat_timeout 20_000
+  @heartbeat_timeout_message "Did not receive heartbeat ack after 20 seconds"
   @registry Crux.Gateway.Registry
 
   @doc """
@@ -66,33 +68,21 @@ defmodule Crux.Gateway.Connection do
   end
 
   @doc false
-  def handle_info(:stop, state), do: {:close, {1000, "Closing connection"}, state}
-  def handle_info({:send, {_atom, _command} = data}, state), do: {:reply, data, state}
-
-  def handle_info(:heartbeat, %{shard_id: shard_id} = state) do
-    Logger.debug(
-      "[Crux][Gateway][Shard #{shard_id}]: Sending heartbeat at seq #{Map.get(state, :seq, "nil")}"
-    )
-
-    state
-    |> Map.get(:seq)
-    |> Command.heartbeat()
-    |> send_command(shard_id)
-
-    {:ok, state}
-  end
-
-  def handle_info(other, %{shard_id: shard_id} = state) do
-    Logger.warn(
-      "[Crux][Gateway][Shard #{shard_id}]: Received unexpected message: #{inspect(other)}"
-    )
-
-    {:ok, state}
-  end
-
-  @doc false
   def handle_disconnect(%{reason: {:remote, code, reason}}, %{shard_id: shard_id} = state) do
     Logger.warn("[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{code} - \"#{reason}\"")
+
+    {:reconnect, state}
+  end
+
+  def handle_disconnect(
+        %{reason: {:local, 4000, @heartbeat_timeout_message}},
+        %{shard_id: shard_id} = state
+      ) do
+    Logger.warn(
+      "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{@heartbeat_timeout_message}. Waiting five seconds before reconnecting"
+    )
+
+    :timer.sleep(5_000)
 
     {:reconnect, state}
   end
@@ -107,6 +97,37 @@ defmodule Crux.Gateway.Connection do
     Logger.warn("[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{inspect(other)}")
 
     {:reconnect, state}
+  end
+
+  @doc false
+  def handle_info(:stop, state), do: {:close, {1000, "Closing connection"}, state}
+  def handle_info({:send, {_atom, _command} = data}, state), do: {:reply, data, state}
+
+  def handle_info(:heartbeat, %{shard_id: shard_id} = state) do
+    Logger.debug(
+      "[Crux][Gateway][Shard #{shard_id}]: Sending heartbeat at seq #{Map.get(state, :seq, "nil")}"
+    )
+
+    state
+    |> Map.get(:seq)
+    |> Command.heartbeat()
+    |> send_command(shard_id)
+
+    {:ok, ref} = :timer.send_after(@heartbeat_timeout, :heartbeat_timeout)
+
+    {:ok, Map.put(state, :heartbeat_timeout, ref)}
+  end
+
+  def handle_info(:heartbeat_timeout, state) do
+    {:close, {4000, @heartbeat_timeout_message}, state}
+  end
+
+  def handle_info(other, %{shard_id: shard_id} = state) do
+    Logger.warn(
+      "[Crux][Gateway][Shard #{shard_id}]: Received unexpected message: #{inspect(other)}"
+    )
+
+    {:ok, state}
   end
 
   @doc false
@@ -275,10 +296,15 @@ defmodule Crux.Gateway.Connection do
   # 11 - Heartbeat ack
   defp handle_packet(%{shard_id: shard_id} = state, %{op: 11}) do
     Logger.debug("[Crux][Gateway][Shard #{shard_id}]: Received heartbeat ack")
-    # TODO: Handle zombie / dead connections
-    # https://discordapp.com/developers/docs/topics/gateway#heartbeating-example-gateway-heartbeat-ack
 
-    state
+    case state do
+      %{heartbeat_timeout: ref} ->
+        :timer.cancel(ref)
+        Map.delete(state, :heartbeat_timeout)
+
+      state ->
+        state
+    end
   end
 
   defp handle_packet(%{shard_id: shard_id} = state, packet) do
