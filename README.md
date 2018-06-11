@@ -21,7 +21,6 @@ def deps do
 end
 ```
 
-
 ## Usage
 
 For example:
