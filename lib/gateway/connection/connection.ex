@@ -95,7 +95,11 @@ defmodule Crux.Gateway.Connection do
   def handle_disconnect(
         %{reason: {:local, 4000, message}},
         %{shard_id: shard_id} = state
-      ) when message in [@heartbeat_timeout_message, @hello_timeout_message] do
+      )
+      when message in [
+             @heartbeat_timeout_message,
+             @hello_timeout_message
+           ] do
     Logger.warn(
       "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{message}. Waiting five seconds before reconnecting"
     )
