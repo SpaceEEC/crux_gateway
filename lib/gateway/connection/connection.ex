@@ -88,13 +88,21 @@ defmodule Crux.Gateway.Connection do
   end
 
   def handle_disconnect(%{reason: reason}, %{shard_id: shard_id} = state) do
-    Logger.warn("[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{inspect(reason)}")
+    Logger.warn(
+      "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{inspect(reason)}. Waiting five seconds before reconnecting"
+    )
+
+    :timer.sleep(5_000)
 
     {:reconnect, state}
   end
 
   def handle_disconnect(other, %{shard_id: shard_id} = state) do
-    Logger.warn("[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{inspect(other)}")
+    Logger.warn(
+      "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{inspect(other)}. Waiting five seconds before reconnecting"
+    )
+
+    :timer.sleep(5_000)
 
     {:reconnect, state}
   end
