@@ -10,8 +10,12 @@ defmodule Crux.Gateway.Connection do
 
   require Logger
 
+  @hello_timeout 20_000
+  @hello_timeout_message "Did not receive hello after 20 seconds"
+
   @heartbeat_timeout 20_000
   @heartbeat_timeout_message "Did not receive heartbeat ack after 20 seconds"
+
   @registry Crux.Gateway.Registry
 
   @doc """
@@ -54,7 +58,14 @@ defmodule Crux.Gateway.Connection do
     z = :zlib.open()
     :zlib.inflateInit(z)
 
-    {:ok, Map.put(args, :zlib, {<<>>, z})}
+    {:ok, ref} = :timer.send_after(@hello_timeout, :hello_timeout)
+
+    state =
+      args
+      |> Map.put(:zlib, {<<>>, z})
+      |> Map.put(:hello_timeout, ref)
+
+    {:ok, state}
   end
 
   def handle_connect(_, %{shard_id: shard_id} = state) do
@@ -64,7 +75,14 @@ defmodule Crux.Gateway.Connection do
     z = :zlib.open()
     :zlib.inflateInit(z)
 
-    {:ok, Map.put(state, :zlib, {<<>>, z})}
+    {:ok, ref} = :timer.send_after(@hello_timeout, :hello_timeout)
+
+    state =
+      state
+      |> Map.put(:zlib, {<<>>, z})
+      |> Map.put(:hello_timeout, ref)
+
+    {:ok, state}
   end
 
   @doc false
@@ -75,11 +93,11 @@ defmodule Crux.Gateway.Connection do
   end
 
   def handle_disconnect(
-        %{reason: {:local, 4000, @heartbeat_timeout_message}},
+        %{reason: {:local, 4000, message}},
         %{shard_id: shard_id} = state
-      ) do
+      ) when message in [@heartbeat_timeout_message, @hello_timeout_message] do
     Logger.warn(
-      "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{@heartbeat_timeout_message}. Waiting five seconds before reconnecting"
+      "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{message}. Waiting five seconds before reconnecting"
     )
 
     :timer.sleep(5_000)
@@ -128,6 +146,10 @@ defmodule Crux.Gateway.Connection do
 
   def handle_info(:heartbeat_timeout, state) do
     {:close, {4000, @heartbeat_timeout_message}, state}
+  end
+
+  def handle_info(:hello_timeout, state) do
+    {:close, {4000, @hello_timeout_message}, state}
   end
 
   def handle_info(other, %{shard_id: shard_id} = state) do
@@ -260,6 +282,15 @@ defmodule Crux.Gateway.Connection do
     end)
 
     state
+  end
+
+  # 10 - Hello - Removeing hello timeout
+  defp handle_packet(%{hello_timeout: ref} = state, %{op: 10} = packet) do
+    :timer.cancel(ref)
+
+    state
+    |> Map.delete(:hello_timeout)
+    |> handle_packet(packet)
   end
 
   # 10 - Hello - Still heartbeating
