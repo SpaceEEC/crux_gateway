@@ -31,8 +31,8 @@ defmodule Crux.Gateway do
           optional(:token) => String.t(),
           optional(:url) => String.t(),
           optional(:shard_count) => pos_integer(),
-          optional(:shards) => [non_neg_integer | Range.t()],
-          optional(:dispatcher) => GenStage.Dispatcher.t() | {GenStage.Dispatcher.t(), term}
+          optional(:shards) => [non_neg_integer() | Range.t()],
+          optional(:dispatcher) => GenStage.Dispatcher.t() | {GenStage.Dispatcher.t(), term()}
         }
 
   @doc """
@@ -40,7 +40,7 @@ defmodule Crux.Gateway do
 
   You can specify or override `:token`, `:url`, `:shard_count` and `:shards` here via `t:gateway_options`.
   """
-  @spec start(args :: gateway_options) :: [Supervisor.on_start_child()]
+  @spec start(args :: gateway_options()) :: [Supervisor.on_start_child()]
   def start(args \\ %{}) do
     :application.ensure_started(:crux_gateway)
 

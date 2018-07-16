@@ -23,8 +23,8 @@ defmodule Crux.Gateway.Connection do
 
     The command will be run through a rate limiter, this blockes the calling process until the command is sent.
   """
-  @spec send_command(command :: WebSockex.Frame.t(), shard_id :: pos_integer) ::
-          :ok | {:error, term}
+  @spec send_command(command :: WebSockex.Frame.t(), shard_id :: non_neg_integer()) ::
+          :ok | {:error, term()}
   def send_command({atom, _command} = command, shard_id) when is_number(shard_id) do
     with {^atom, _command} <- RateLimiter.queue(command, shard_id),
          [{pid, _other}] when is_pid(pid) <- Registry.lookup(@registry, {shard_id, :connection}),

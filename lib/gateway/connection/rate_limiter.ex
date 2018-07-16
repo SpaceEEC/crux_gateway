@@ -17,7 +17,7 @@ defmodule Crux.Gateway.Connection.RateLimiter do
 
     This is automatically called when using `Crux.Gateway.start/1`.
   """
-  @spec start_link(shard_id :: non_neg_integer) :: GenServer.on_start()
+  @spec start_link(shard_id :: non_neg_integer()) :: GenServer.on_start()
   def start_link(shard_id) do
     name = {:via, Registry, {@registry, {shard_id, :rate_limiter}}}
 
@@ -33,7 +33,7 @@ defmodule Crux.Gateway.Connection.RateLimiter do
 
     Automatically invoked by using `Crux.Gateway.Connection.send_command/2`
   """
-  @spec queue(packet :: term, shard_id :: non_neg_integer) :: term
+  @spec queue(packet :: term(), shard_id :: non_neg_integer()) :: term()
   def queue(packet, shard_id) do
     with [{pid, _other}] when is_pid(pid) <-
            Registry.lookup(@registry, {shard_id, :rate_limiter}),

@@ -5,20 +5,20 @@ defmodule Crux.Gateway.Command do
 
   A list of available op codes:
 
-  | OP Code | Name                  |               | 
-  | ------- | --------------------- | ------------- | 
-  | 0       | dispatch              | received only | 
-  | 1       | heartbeat             | two way       | 
-  | 2       | identify              | sent only     | 
-  | 3       | status_update         | sent only     | 
-  | 4       | voice_state_update    | sent only     | 
-  | 5       | voice_guild_ping      | sent only     | 
-  | 6       | resume                | sent only     | 
-  | 7       | reconnect             | received only | 
-  | 8       | request_guild_members | sent only     | 
-  | 9       | invalid_session       | received only | 
-  | 10      | hello                 | received only | 
-  | 11      | heartbeat_ack         | received only | 
+  | OP Code | Name                  |               |
+  | ------- | --------------------- | ------------- |
+  | 0       | dispatch              | received only |
+  | 1       | heartbeat             | two way       |
+  | 2       | identify              | sent only     |
+  | 3       | status_update         | sent only     |
+  | 4       | voice_state_update    | sent only     |
+  | 5       | voice_guild_ping      | sent only     |
+  | 6       | resume                | sent only     |
+  | 7       | reconnect             | received only |
+  | 8       | request_guild_members | sent only     |
+  | 9       | invalid_session       | received only |
+  | 10      | hello                 | received only |
+  | 11      | heartbeat_ack         | received only |
 
   [Gateway Lifecycle Flowchart](https://s.gus.host/flowchart.svg)
   """
@@ -37,7 +37,7 @@ defmodule Crux.Gateway.Command do
 
   Used to signalize the server that the client is still alive and able to receive messages.
   """
-  @spec heartbeat(sequence :: integer) :: gateway_command
+  @spec heartbeat(sequence :: integer()) :: gateway_command()
   def heartbeat(sequence), do: finalize(sequence, 1)
 
   @doc """
@@ -47,11 +47,11 @@ defmodule Crux.Gateway.Command do
   """
   @spec identify(
           data :: %{
-            :shard_id => non_neg_integer,
-            :shard_count => non_neg_integer,
+            :shard_id => non_neg_integer(),
+            :shard_count => non_neg_integer(),
             :token => String.t()
           }
-        ) :: gateway_command
+        ) :: gateway_command()
 
   def identify(%{shard_id: shard_id, shard_count: shard_count, token: token}) do
     {os, name} = :os.type()
@@ -84,10 +84,10 @@ defmodule Crux.Gateway.Command do
   Used to join, switch between, and leave voice channels.
   """
   @spec voice_state_update(
-          guild_id :: pos_integer,
-          channel_id :: pos_integer,
+          guild_id :: pos_integer(),
+          channel_id :: pos_integer() | nil,
           states :: [{:self_mute, boolean()} | {:self_deaf, boolean()}]
-        ) :: gateway_command
+        ) :: gateway_command()
   def voice_state_update(guild_id, channel_id \\ nil, states \\ []) do
     %{
       "guild_id" => guild_id,
@@ -106,7 +106,7 @@ defmodule Crux.Gateway.Command do
   """
   @type activity :: %{
           :name => String.t(),
-          :type => non_neg_integer,
+          :type => non_neg_integer(),
           optional(:url) => String.t()
         }
 
@@ -115,7 +115,7 @@ defmodule Crux.Gateway.Command do
 
     Used to update the status of the client, including activity.
   """
-  @spec status_update(status :: String.t(), game :: activity) :: gateway_command
+  @spec status_update(status :: String.t(), game :: activity()) :: gateway_command()
   def status_update(status, game \\ nil) do
     %{
       "afk" => false,
@@ -135,9 +135,9 @@ defmodule Crux.Gateway.Command do
   The gateway will respond with `:GUILD_MEMBER_CHUNK` (a) packet(s).
   """
   @spec request_guild_members(
-          guild_id :: pos_integer,
-          opts :: [{:query, String.t()} | {:limit, pos_integer}]
-        ) :: gateway_command
+          guild_id :: pos_integer(),
+          opts :: [{:query, String.t()} | {:limit, pos_integer()}]
+        ) :: gateway_command()
   def request_guild_members(guild_id, opts \\ []) do
     %{
       "guild_id" => guild_id,
@@ -152,8 +152,8 @@ defmodule Crux.Gateway.Command do
 
   Used to resume into a session which was unexpectly disconnected and may be resumable.
   """
-  @spec resume(data :: %{:seq => non_neg_integer, token: String.t(), session: String.t()}) ::
-          gateway_command
+  @spec resume(data :: %{:seq => non_neg_integer(), token: String.t(), session: String.t()}) ::
+          gateway_command()
   def resume(%{seq: seq, token: token, session: session}) do
     %{
       "seq" => seq,
