@@ -303,7 +303,7 @@ defmodule Crux.Gateway.Connection do
     :timer.cancel(ref)
 
     state
-    |> Map.drop([:heartbeat])
+    |> Map.delete(:heartbeat)
     |> handle_packet(packet)
   end
 
