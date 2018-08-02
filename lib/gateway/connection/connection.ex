@@ -206,6 +206,7 @@ defmodule Crux.Gateway.Connection do
        when is_number(s) and is_number(seq) and s > seq,
        do: Map.put(state, :seq, s)
 
+  defp handle_sequence(%{seq: seq} = state, _packet) when not is_nil(seq), do: state
   defp handle_sequence(state, %{s: s}), do: Map.put(state, :seq, s)
   defp handle_sequence(state, _packet), do: state
 
