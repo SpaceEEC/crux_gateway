@@ -1,12 +1,18 @@
 sudo: false
 
-language: elixir
-elixir: '1.6.4'
-otp_release: '20.3'
+matrix:
+  include:
+    - language: elixir
+      elixir: '1.7.3'
+      otp_release: '21.0.8'
+      script:
+        - mix format --check-formatted
+        - mix test
 
-script:
-  - mix format --check-formatted
-  - mix test
+    - language: elixir
+      elixir: '1.6'
+      otp_release: '20.3'
+      script: 'mix test'
 
 deploy:
   skip_cleanup: true
@@ -15,3 +21,4 @@ deploy:
   on:
     tags: true
     branch: master
+    elixir: '1.7.3'
