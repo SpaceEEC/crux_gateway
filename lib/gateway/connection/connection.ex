@@ -218,25 +218,41 @@ defmodule Crux.Gateway.Connection do
   defp handle_sequence(state, %{s: s}), do: Map.put(state, :seq, s)
   defp handle_sequence(state, _packet), do: state
 
+  defp handle_packet(
+         %{shard_id: shard_id} = state,
+         %{
+           t: :READY,
+           d: %{
+             _trace: trace,
+             session_id: session_id
+           }
+         } = packet
+       ) do
+    Logger.info(
+      "[Crux][Gateway][Shard #{shard_id}]: Ready #{packet.d._trace |> Enum.join(" -> ")}"
+    )
+
+    Producer.dispatch(packet, shard_id)
+
+    state
+    |> Map.delete(:close_seq)
+    |> Map.put(:trace, trace)
+    |> Map.put(:session, session_id)
+  end
+
+  defp handle_packet(%{shard_id: shard_id} = state, %{t: :RESUMED} = packet) do
+    {close_seq, state} = Map.pop(state, :close_seq, 0)
+
+    Logger.info(
+      "[Crux][Gateway][Shard #{shard_id}]: Resumed #{close_seq} -> #{Map.get(state, :seq)}"
+    )
+
+    Producer.dispatch(packet, shard_id)
+
+    state
+  end
+
   defp handle_packet(%{shard_id: shard_id} = state, %{op: 0} = packet) do
-    state =
-      case packet.t do
-        :READY ->
-          Map.put(state, :session, packet.d.session_id)
-
-        :RESUMED ->
-          {close_seq, state} = Map.pop(state, :close_seq, 0)
-
-          Logger.info(
-            "[Crux][Gateway][Shard #{shard_id}]: Resumed #{close_seq} -> #{Map.get(state, :seq)}"
-          )
-
-          state
-
-        _ ->
-          state
-      end
-
     Producer.dispatch(packet, shard_id)
 
     state
