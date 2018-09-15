@@ -89,6 +89,8 @@ defmodule Crux.Gateway.Connection do
   def handle_disconnect(%{reason: {:remote, code, reason}}, %{shard_id: shard_id} = state) do
     Logger.warn("[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{code} - \"#{reason}\"")
 
+    state = Map.put(state, :close_seq, Map.get(state, :seq, 0))
+
     {:reconnect, state}
   end
 
@@ -104,6 +106,8 @@ defmodule Crux.Gateway.Connection do
       "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{message}. Waiting five seconds before reconnecting"
     )
 
+    state = Map.put(state, :close_seq, Map.get(state, :seq, 0))
+
     :timer.sleep(5_000)
 
     {:reconnect, state}
@@ -114,6 +118,8 @@ defmodule Crux.Gateway.Connection do
       "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{inspect(reason)}. Waiting five seconds before reconnecting"
     )
 
+    state = Map.put(state, :close_seq, Map.get(state, :seq, 0))
+
     :timer.sleep(5_000)
 
     {:reconnect, state}
@@ -123,6 +129,8 @@ defmodule Crux.Gateway.Connection do
     Logger.warn(
       "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{inspect(other)}. Waiting five seconds before reconnecting"
     )
+
+    state = Map.put(state, :close_seq, Map.get(state, :seq, 0))
 
     :timer.sleep(5_000)
 
