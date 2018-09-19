@@ -115,7 +115,7 @@ defmodule Crux.Gateway.Command do
 
     Used to update the status of the client, including activity.
   """
-  @spec status_update(status :: String.t(), game :: activity()) :: gateway_command()
+  @spec status_update(status :: String.t(), game :: activity() | nil) :: gateway_command()
   def status_update(status, game \\ nil) do
     %{
       "afk" => false,
@@ -163,6 +163,8 @@ defmodule Crux.Gateway.Command do
     |> finalize(6)
   end
 
+  @spec finalize(data :: %{String.t() => map() | String.t()}, op :: integer()) ::
+          {:binary, binary()}
   defp finalize(data, op) do
     data =
       %{

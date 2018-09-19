@@ -136,6 +136,7 @@ defmodule Crux.Gateway do
     |> raise_shards()
   end
 
+  @spec raise_shards(suffix :: String.t()) :: no_return()
   defp raise_shards(suffix \\ "") do
     raise """
           :shards must be a list of numbers and/or ranges
