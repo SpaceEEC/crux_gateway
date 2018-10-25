@@ -73,7 +73,8 @@ defmodule Crux.Gateway.Connection.Producer do
 
   @doc false
   def handle_cast({:dispatch, event}, {queue, demand}) do
-    :queue.in(event, queue)
+    event
+    |> :queue.in(queue)
     |> dispatch_events(demand, [])
   end
 

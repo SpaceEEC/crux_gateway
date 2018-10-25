@@ -5,8 +5,8 @@ defmodule Crux.Gateway.Connection do
 
   use WebSockex
 
-  alias Crux.Gateway.Command
-  alias Crux.Gateway.Connection.{Producer, RateLimiter}
+  alias Crux.Gateway.{Command, IdentifyLimiter, Util}
+  alias Crux.Gateway.Connection.{RateLimiter, Producer}
 
   require Logger
 
@@ -83,6 +83,30 @@ defmodule Crux.Gateway.Connection do
       |> Map.put(:hello_timeout, ref)
 
     {:ok, state}
+  end
+
+  def handle_disconnect(reason, %{hello_timeout: ref} = state) do
+    if ref do
+      :timer.cancel(ref)
+    end
+
+    handle_disconnect({reason, Map.delete(state, :hello_timeout)}, state)
+  end
+
+  def handle_disconnect(reason, %{heartbeat: ref} = state) do
+    if ref do
+      :timer.cancel(ref)
+    end
+
+    handle_disconnect({reason, Map.delete(state, :heartbeat)}, state)
+  end
+
+  def handle_disconnect(reason, %{heartbeat_timeout: ref} = state) do
+    if ref do
+      :timer.cancel(ref)
+    end
+
+    handle_disconnect({reason, Map.delete(state, :heartbeat_timeout)}, state)
   end
 
   @doc false
@@ -191,7 +215,7 @@ defmodule Crux.Gateway.Connection do
           |> (&:zlib.inflate(z, &1)).()
           |> :erlang.iolist_to_binary()
           |> :erlang.binary_to_term()
-          |> Crux.Gateway.Util.atomify()
+          |> Util.atomify()
 
         {<<>>, uncompressed}
       else
@@ -305,7 +329,7 @@ defmodule Crux.Gateway.Connection do
         state
         |> Command.identify()
         |> RateLimiter.queue(shard_id)
-        |> Crux.Gateway.IdentifyLimiter.queue(shard_id)
+        |> IdentifyLimiter.queue(shard_id)
 
       WebSockex.send_frame(pid, command)
     end)
@@ -335,7 +359,8 @@ defmodule Crux.Gateway.Connection do
   defp handle_packet(%{shard_id: shard_id} = state, %{op: 10, d: d}) do
     case state do
       %{seq: _seq, session: _session} ->
-        Command.resume(state)
+        state
+        |> Command.resume()
         |> send_command(shard_id)
 
       _ ->
@@ -346,7 +371,7 @@ defmodule Crux.Gateway.Connection do
             state
             |> Command.identify()
             |> RateLimiter.queue(shard_id)
-            |> Crux.Gateway.IdentifyLimiter.queue(shard_id)
+            |> IdentifyLimiter.queue(shard_id)
 
           WebSockex.send_frame(pid, command)
         end)
