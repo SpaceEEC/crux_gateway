@@ -4,10 +4,10 @@ Package providing a flexible gateway connection to the Discord API.
 
 ## Useful links
 
- - [Latest Release Documentation](https://hexdocs.pm/crux_gateway/)
+ - [Documentation](https://hexdocs.pm/crux_gateway/0.1.1/)
  - [Github](https://github.com/SpaceEEC/crux_gateway/)
  - [Changelog](https://github.com/SpaceEEC/crux_gateway/releases/tag/0.1.1/)
- - [Development Documentation](https://crux.randomly.space/)
+ - [Umbrella Development Documentation](https://crux.randomly.space/)
 
 ## Installation
 
@@ -31,4 +31,5 @@ For example:
   ...>   url: "wss://discord.gg",
   ...>   shard_count: 1
   ...> })
+  [ok: #PID<0.187.0>]
 ```
