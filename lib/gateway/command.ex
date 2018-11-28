@@ -119,7 +119,7 @@ defmodule Crux.Gateway.Command do
   def status_update(status, game \\ nil) do
     %{
       "afk" => false,
-      "game" => game,
+      "game" => game |> Map.new(fn {k, v} -> {to_string(k), v} end),
       "since" => 0,
       "status" => status
     }
