@@ -130,9 +130,18 @@ defmodule Crux.Gateway.Command do
   """
   @spec status_update(status :: String.t(), game :: activity() | nil) :: gateway_command()
   def status_update(status, game \\ nil) do
+    game =
+      case game do
+        %{} = game ->
+          Map.new(game, fn {k, v} -> {to_string(k), v} end)
+
+        nil ->
+          nil
+      end
+
     %{
       "afk" => false,
-      "game" => game |> Map.new(fn {k, v} -> {to_string(k), v} end),
+      "game" => game,
       "since" => 0,
       "status" => status
     }
