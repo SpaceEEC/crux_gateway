@@ -49,11 +49,29 @@ defmodule Crux.Gateway.Command do
           data :: %{
             :shard_id => non_neg_integer(),
             :shard_count => non_neg_integer(),
-            :token => String.t()
+            :token => String.t(),
+            optional(:presence) => (non_neg_integer() -> map()) | map()
           }
         ) :: gateway_command()
 
-  def identify(%{shard_id: shard_id, shard_count: shard_count, token: token}) do
+  def identify(%{shard_id: shard_id, shard_count: shard_count, token: token} = args) do
+    presence =
+      case args do
+        %{presence: presence} when is_map(presence) ->
+          presence
+
+        %{presence: presence} when is_function(presence, 1) ->
+          presence.(shard_id)
+
+        %{presence: nil} ->
+          %{
+            "game" => nil,
+            "status" => "online"
+          }
+      end
+      |> Map.new(fn {k, v} -> {to_string(k), v} end)
+      |> Map.merge(%{"since" => 0, "afk" => false})
+
     {os, name} = :os.type()
 
     %{
@@ -68,12 +86,7 @@ defmodule Crux.Gateway.Command do
       "compress" => true,
       "large_threshold" => 250,
       "shard" => [shard_id, shard_count],
-      "presence" => %{
-        "since" => 0,
-        "game" => nil,
-        "status" => "online",
-        "afk" => false
-      }
+      "presence" => presence
     }
     |> finalize(2)
   end

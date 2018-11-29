@@ -20,6 +20,12 @@ defmodule Crux.Gateway do
 
   - Optionally `:dispatcher`, which has to be a valid `GenStage.Dispatcher` or a tuple of one and initial state.
   > See `Crux.Gateway.Connection.Producer` for more info.
+
+  - Optionally `:presence`, which is used for the initial presence of every session.
+    This should be a presence or a function with an arity of one (the shard id) and returning a presence.
+  > If a function, it will be invoked whenever a shard is about to identify.
+    If omitted the presence will default to online and no game.
+
   """
 
   @typedoc """
@@ -32,7 +38,8 @@ defmodule Crux.Gateway do
           optional(:url) => String.t(),
           optional(:shard_count) => pos_integer(),
           optional(:shards) => [non_neg_integer() | Range.t()],
-          optional(:dispatcher) => GenStage.Dispatcher.t() | {GenStage.Dispatcher.t(), term()}
+          optional(:dispatcher) => GenStage.Dispatcher.t() | {GenStage.Dispatcher.t(), term()},
+          optional(:presence) => (non_neg_integer() -> map()) | map()
         }
 
   @doc """
@@ -95,7 +102,8 @@ defmodule Crux.Gateway do
     %{
       url: fetch_or_put_env(args, :url, &is_bitstring/1),
       token: fetch_or_put_env(args, :token, &is_bitstring/1),
-      shard_count: shard_count
+      shard_count: shard_count,
+      presence: fetch_or_put_env(args, :presence, &validate_presence/1)
     }
     |> Crux.Gateway.Supervisor.start_gateway(shards)
   end
@@ -109,7 +117,7 @@ defmodule Crux.Gateway do
           value
 
         _ ->
-          Application.fetch_env!(:crux_gateway, atom)
+          Application.get_env(:crux_gateway, atom)
       end
 
     if validator.(value) do
@@ -145,4 +153,13 @@ defmodule Crux.Gateway do
           #{inspect(Application.fetch_env!(:crux_gateway, :shards))}
           """ <> suffix
   end
+
+  defp validate_presence(p)
+       when is_nil(p)
+       when is_map(p)
+       when is_function(p, 1) do
+    true
+  end
+
+  defp validate_presence(_p), do: false
 end
