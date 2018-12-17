@@ -1,7 +1,5 @@
 defmodule Crux.Gateway.Application do
-  @moduledoc """
-    Root for the supervision tree.
-  """
+  @moduledoc false
   use Application
 
   @doc """
