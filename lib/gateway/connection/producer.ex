@@ -22,7 +22,7 @@ defmodule Crux.Gateway.Connection.Producer do
   @spec producers() :: %{
           optional(non_neg_integer) => pid() | :not_found
         }
-  def producers do
+  def producers() do
     Application.fetch_env!(:crux_gateway, :shards)
     |> Map.new(fn shard_id ->
       pid =
