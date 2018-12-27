@@ -90,7 +90,9 @@ defmodule Crux.Gateway.Connection do
       :timer.cancel(ref)
     end
 
-    handle_disconnect({reason, Map.delete(state, :hello_timeout)}, state)
+    state = Map.delete(state, :hello_timeout)
+
+    handle_disconnect(reason, state)
   end
 
   def handle_disconnect(reason, %{heartbeat: ref} = state) do
@@ -98,7 +100,9 @@ defmodule Crux.Gateway.Connection do
       :timer.cancel(ref)
     end
 
-    handle_disconnect({reason, Map.delete(state, :heartbeat)}, state)
+    state = Map.delete(state, :heartbeat)
+
+    handle_disconnect(reason, state)
   end
 
   def handle_disconnect(reason, %{heartbeat_timeout: ref} = state) do
@@ -106,7 +110,9 @@ defmodule Crux.Gateway.Connection do
       :timer.cancel(ref)
     end
 
-    handle_disconnect({reason, Map.delete(state, :heartbeat_timeout)}, state)
+    state = Map.delete(state, :heartbeat_timeout)
+
+    handle_disconnect(reason, state)
   end
 
   @doc false
@@ -235,8 +241,9 @@ defmodule Crux.Gateway.Connection do
   end
 
   defp handle_sequence(%{seq: seq} = state, %{s: s})
-       when is_number(s) and is_number(seq) and s > seq,
-       do: Map.put(state, :seq, s)
+       when is_number(s) and is_number(seq) and s > seq do
+    Map.put(state, :seq, s)
+  end
 
   defp handle_sequence(%{seq: seq} = state, _packet) when not is_nil(seq), do: state
   defp handle_sequence(state, %{s: s}), do: Map.put(state, :seq, s)
