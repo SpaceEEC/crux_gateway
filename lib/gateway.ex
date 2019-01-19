@@ -106,11 +106,11 @@ defmodule Crux.Gateway do
   def get_shards(gateway) do
     gateway
     |> Supervisor.which_children()
-    |> Enum.find(fn
+    |> Enum.filter(fn
       {id, _pid, _type, _module} when is_integer(id) -> true
       _ -> false
     end)
-    |> Enum.into(%{}, fn {id, pid, _type, _module} -> {id, pid} end)
+    |> Map.new(fn {id, pid, _type, _module} -> {id, pid} end)
   end
 
   defp transform_opts(
