@@ -64,6 +64,6 @@ defmodule Crux.Gateway.Connection.RateLimiter do
         state
       end
 
-      {:reply, :ok, state}
+    {:reply, :ok, state}
   end
 end

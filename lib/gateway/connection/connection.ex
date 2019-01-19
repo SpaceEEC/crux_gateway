@@ -95,23 +95,34 @@ defmodule Crux.Gateway.Connection do
     {:ok, state}
   end
 
-  for timer <- [:hello_timeout, :heartbeat, :heartbeat_timeout] do
-    def handle_disconnect(reason, state)
-        when :erlang.is_map_key(unquote(timer), state) do
-      state
-      |> Map.get(unquote(timer))
-      |> case do
-        ref when is_reference(ref) ->
-          :timer.cancel(ref)
-
-        _ ->
-          nil
-      end
-
-      state = Map.delete(state, unquote(timer))
-
-      handle_disconnect(reason, state)
+  def handle_disconnect(reason, %{hello_timeout: ref} = state) do
+    if ref do
+      :timer.cancel(ref)
     end
+
+    state = Map.delete(state, :hello_timeout)
+
+    handle_disconnect(reason, state)
+  end
+
+  def handle_disconnect(reason, %{heartbeat: ref} = state) do
+    if ref do
+      :timer.cancel(ref)
+    end
+
+    state = Map.delete(state, :heartbeat)
+
+    handle_disconnect(reason, state)
+  end
+
+  def handle_disconnect(reason, %{heartbeat_timeout: ref} = state) do
+    if ref do
+      :timer.cancel(ref)
+    end
+
+    state = Map.delete(state, :heartbeat_timeout)
+
+    handle_disconnect(reason, state)
   end
 
   def handle_disconnect(%{reason: {:remote, code, reason}}, %{shard_id: shard_id} = state) do
