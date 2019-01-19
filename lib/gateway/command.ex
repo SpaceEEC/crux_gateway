@@ -30,14 +30,14 @@ defmodule Crux.Gateway.Command do
     pass `:erlang.term_to_binary/1` a map with the keys `op` and `d`,
     and wrap it in a tuple with `:binary` as first element.
   """
-  @type gateway_command :: {:binary, binary()}
+  @type command :: WebSockex.frame()
 
   @doc """
   Builds a [Heartbeat](https://discordapp.com/developers/docs/topics/gateway#heartbeat) command.
 
   Used to signalize the server that the client is still alive and able to receive messages.
   """
-  @spec heartbeat(sequence :: integer()) :: gateway_command()
+  @spec heartbeat(sequence :: integer()) :: command()
   def heartbeat(sequence), do: finalize(sequence, 1)
 
   @doc """
@@ -50,9 +50,9 @@ defmodule Crux.Gateway.Command do
             :shard_id => non_neg_integer(),
             :shard_count => non_neg_integer(),
             :token => String.t(),
-            optional(:presence) => (non_neg_integer() -> map()) | map()
+            optional(:presence) => Crux.Gateway.presence()
           }
-        ) :: gateway_command()
+        ) :: command()
 
   def identify(%{shard_id: shard_id, shard_count: shard_count, token: token} = args) do
     presence =
@@ -63,7 +63,7 @@ defmodule Crux.Gateway.Command do
         %{presence: presence} when is_function(presence, 1) ->
           presence.(shard_id)
 
-        %{presence: nil} ->
+        _ ->
           %{
             "game" => nil,
             "status" => "online"
@@ -94,13 +94,13 @@ defmodule Crux.Gateway.Command do
   @doc """
   Builds a [Voice State Update](https://discordapp.com/developers/docs/topics/gateway#voice-state-update) command.
 
-  Used to join, switch between, and leave voice channels.
+  Used to join, switch between, and leave voice channels and/or change self_mute or self_deaf states.
   """
   @spec voice_state_update(
           guild_id :: pos_integer(),
           channel_id :: pos_integer() | nil,
           states :: [{:self_mute, boolean()} | {:self_deaf, boolean()}]
-        ) :: gateway_command()
+        ) :: command()
   def voice_state_update(guild_id, channel_id \\ nil, states \\ []) do
     %{
       "guild_id" => guild_id,
@@ -128,7 +128,7 @@ defmodule Crux.Gateway.Command do
 
     Used to update the status of the client, including activity.
   """
-  @spec status_update(status :: String.t(), game :: activity() | nil) :: gateway_command()
+  @spec status_update(status :: String.t(), game :: activity() | nil) :: command()
   def status_update(status, game \\ nil) do
     game =
       case game do
@@ -154,12 +154,12 @@ defmodule Crux.Gateway.Command do
   Used to request guild member for a specific guild.
   > Note: This must be sent to the connection handling the guild, not just any connection.
 
-  The gateway will respond with `:GUILD_MEMBER_CHUNK` (a) packet(s).
+  The gateway will respond with `:GUILD_MEMBER_CHUNK` packets until all appropriate members are received.
   """
   @spec request_guild_members(
           guild_id :: pos_integer(),
           opts :: [{:query, String.t()} | {:limit, pos_integer()}]
-        ) :: gateway_command()
+        ) :: command()
   def request_guild_members(guild_id, opts \\ []) do
     %{
       "guild_id" => guild_id,
@@ -174,8 +174,13 @@ defmodule Crux.Gateway.Command do
 
   Used to resume into a session which was unexpectly disconnected and may be resumable.
   """
-  @spec resume(data :: %{:seq => non_neg_integer(), token: String.t(), session: String.t()}) ::
-          gateway_command()
+  @spec resume(
+          data :: %{
+            :seq => non_neg_integer(),
+            token: String.t(),
+            session: String.t()
+          }
+        ) :: command()
   def resume(%{seq: seq, token: token, session: session}) do
     %{
       "seq" => seq,
@@ -185,8 +190,10 @@ defmodule Crux.Gateway.Command do
     |> finalize(6)
   end
 
-  @spec finalize(data :: %{String.t() => map() | String.t()}, op :: integer()) ::
-          {:binary, binary()}
+  @spec finalize(
+          data :: %{String.t() => map() | String.t()},
+          op :: integer()
+        ) :: {:binary, binary()}
   defp finalize(data, op) do
     data =
       %{

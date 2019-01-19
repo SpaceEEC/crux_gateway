@@ -1,7 +1,7 @@
 defmodule Crux.Gateway.MixProject do
   use Mix.Project
 
-  @vsn "0.1.4"
+  @vsn "0.2.0-dev"
   @name :crux_gateway
 
   def project do
@@ -33,10 +33,7 @@ defmodule Crux.Gateway.MixProject do
   end
 
   def application do
-    [
-      extra_applications: [:logger],
-      mod: {Crux.Gateway.Application, []}
-    ]
+    [extra_applications: [:logger]]
   end
 
   defp deps do
