@@ -105,8 +105,8 @@ defmodule Crux.Gateway.Command do
     %{
       "guild_id" => guild_id,
       "channel_id" => channel_id,
-      "self_mute" => states[:self_mute] || false,
-      "self_deaf" => states[:self_deaf] || true
+      "self_mute" => Keyword.get(states, :self_mute, false),
+      "self_deaf" => Keyword.get(states, :self_deaf, false)
     }
     |> finalize(4)
   end
