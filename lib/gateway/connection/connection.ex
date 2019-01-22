@@ -73,7 +73,12 @@ defmodule Crux.Gateway.Connection do
   def handle_connect(con, %{shard_id: shard_id, zlib: {_, z}} = state) do
     Logger.info(fn -> "[Crux][Gateway][Shard #{shard_id}]: Reconnected" end)
 
-    :zlib.inflateEnd(z)
+    try do
+      :zlib.inflateEnd(z)
+    rescue
+      _ -> nil
+    end
+
     :zlib.close(z)
 
     state = Map.delete(state, :zlib)
