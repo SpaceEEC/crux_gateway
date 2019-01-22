@@ -244,14 +244,15 @@ defmodule Crux.Gateway.Connection do
         state
       end
 
-    state = Map.put(state, :zlib, {vuffer, z})
+    state = %{state | zlib: {vuffer, z}}
 
     {:ok, state}
   end
 
   defp handle_sequence(%{seq: seq} = state, %{s: s})
-       when is_number(s) and is_number(seq) and s > seq do
-    Map.put(state, :seq, s)
+       when is_number(s) and is_number(seq) and s > seq
+       when is_nil(seq) do
+    %{state | seq: s}
   end
 
   defp handle_sequence(%{seq: seq} = state, _packet) when not is_nil(seq), do: state

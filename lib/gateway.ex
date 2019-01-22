@@ -150,7 +150,7 @@ defmodule Crux.Gateway do
             """
           end
 
-          Map.put(opts, :shards, shards)
+          %{opts | shards: shards}
 
         _ ->
           Map.put(opts, :shards, Enum.to_list(0..(shard_count - 1)))
