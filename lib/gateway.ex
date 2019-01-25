@@ -102,7 +102,7 @@ defmodule Crux.Gateway do
   def get_shard(gateway, id) when is_integer(id), do: Util.get_pid(gateway, id)
 
   @doc false
-  @spec get_shards(gateway()) :: pid() | :error
+  @spec get_shards(gateway()) :: %{required(non_neg_integer()) => pid()} | :error
   def get_shards(gateway) do
     gateway
     |> Supervisor.which_children()
