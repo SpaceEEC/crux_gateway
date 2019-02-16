@@ -42,7 +42,11 @@ defmodule Crux.Gateway.MixProject do
       {:websockex, "~> 0.4.1"},
       {:poison, "~> 3.1.0"},
       {:credo, "~> 0.9.2", only: [:dev, :test], runtime: false},
-      {:ex_doc, git: "https://github.com/spaceeec/ex_doc", only: :dev, runtime: false}
+      {:ex_doc,
+       git: "https://github.com/spaceeec/ex_doc",
+       branch: "feat/umbrella",
+       only: :dev,
+       runtime: false}
     ]
   end
 end
