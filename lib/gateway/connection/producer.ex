@@ -2,73 +2,49 @@ defmodule Crux.Gateway.Connection.Producer do
   @moduledoc """
     Handles dispatching of packets received from the gateway.
 
-    Every gateway has its own producer, defaults to `GenStage.BroadcastDispatcher`s.
+    Every `Crux.Gateway.Connection` (shard) has its own producer, defaults to `GenStage.BroadcastDispatcher`s.
 
-    The dispatcher can be overriden via app config or passed override in `Crux.Gateway.start/1`.
-    The key is `:dispatcher`, value should be a valid `GenStage.Dispatcher`, or a tuple of one and initial state.
+    The dispatcher can be overriden via `t:Crux.Gateway.options/0`
 
-    > For more informations regarding Consumers and Producers consult `GenStage`'s docs.
+  > For more informations regarding Consumers and Producers consult `GenStage`'s documentation.
   """
+
+  alias Crux.Gateway
+  alias Crux.Gateway.Connection
 
   use GenStage
 
-  @registry Crux.Gateway.Registry
+  @doc false
+  @spec start_link(args :: any()) :: GenServer.on_start()
+  def start_link(args), do: GenStage.start_link(__MODULE__, args)
 
   @doc """
-    Computes a map of all producers keyed by shard_id.
-
-    Values are either a `t:pid/0` or, if for some reason the producer could not be found, `:not_found`.
+    Computes a map of all producer `t:pid/0`s keyed by shard_id.
   """
-  @spec producers() :: %{
-          optional(non_neg_integer) => pid() | :not_found
-        }
-  def producers() do
-    Application.fetch_env!(:crux_gateway, :shards)
-    |> Map.new(fn shard_id ->
-      pid =
-        with [{pid, _other}] when is_pid(pid) <-
-               Registry.lookup(@registry, {shard_id, :producer}),
-             true <- Process.alive?(pid) do
-          pid
-        else
-          _ ->
-            :not_found
-        end
-
-      {shard_id, pid}
-    end)
+  @spec producers(gateway :: Crux.Gateway.gateway()) :: %{optional(non_neg_integer()) => pid()}
+  def producers(gateway) do
+    gateway
+    |> Gateway.get_shards()
+    |> Map.new(fn {id, sup} -> {id, Connection.Supervisor.get_producer(sup)} end)
   end
 
   @doc false
-  def start_link(shard_id) do
-    name = {:via, Registry, {@registry, {shard_id, :producer}}}
-
-    GenStage.start_link(__MODULE__, nil, name: name)
+  @spec dispatch(sup :: Supervisor.supervisor(), event :: map(), shard_id :: pos_integer()) :: :ok
+  def dispatch(sup, %{t: type, d: data}, shard_id) do
+    sup
+    |> Connection.Supervisor.get_producer()
+    |> GenStage.cast({:dispatch, {type, data, shard_id}})
   end
 
   @doc false
-  def dispatch(%{t: type, d: data}, shard_id) do
-    with [{pid, _other}] <- Registry.lookup(@registry, {shard_id, :producer}),
-         true <- Process.alive?(pid) do
-      GenStage.cast(pid, {:dispatch, {type, data, shard_id}})
-    else
-      _ ->
-        require Logger
-        Logger.warn("Missing producer for shard #{shard_id}; #{type}")
-    end
-  end
+  def init(dispatcher) do
+    state = {
+      :queue.new(),
+      # demand
+      0
+    }
 
-  # Queue
-  # rear - tail (in)
-  # elements
-  # elements
-  # more elements
-  # front - head (out)
-
-  @doc false
-  def init(_state) do
-    dispatcher = Application.fetch_env!(:crux_gateway, :dispatcher)
-    {:producer, {:queue.new(), 0}, dispatcher: dispatcher}
+    {:producer, state, dispatcher: dispatcher}
   end
 
   @doc false

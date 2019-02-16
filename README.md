@@ -26,31 +26,54 @@ end
 For example:
 
 ```elixir
-  iex> Crux.Gateway.start(%{
-     token: "your token goes, for example, here",
-     url: "wss://gateway.discord.gg",
-     shard_count: 1
-   })
-  [ok: #PID<0.187.0>]
+defmodule MyApp.Application do
+  use Application
 
-  iex> defmodule Consumer do
-     use GenStage
+  def start(_, _) do
+    children = [
+      {Crux.Gateway,
+       {%{
+          token: "your token",
+          url: "current gateway url",
+          shard_count: 1
+        }, name: MyApp.Gateway}},
+      MyApp.Consumer
+    ]
 
-     def init(_) do
-       producers = Crux.Gateway.Connection.Producer.producers() |> Map.values()
-       {:consumer, nil, subscribe_to: producers}
-     end
+    Supervisor.start_link(children, strategy: :one_for_one)
+  end
+end
+```
 
-     def handle_events(events, _from, nil) do
-       for {:MESSAGE_CREATE, message, _shard_id} <- events do
-         IO.puts("#{message.author.username}##{message.author.discriminator}: #{message.content}")
-       end
+```elixir
+defmodule MyApp.Consumer do
+  use GenStage
 
-       {:noreply, [], nil}
-     end
-   end
-   {:module, Consumer, <<...>>, {:handle_events, 3}}
+  def start_link(args) do
+    GenStage.start_link(__MODULE__, args)
+  end
 
-   iex> GenStage.start(Consumer, nil)
-   {:ok, #Pid<0.243.0>}
+  def init(args) do
+    pids = Crux.Gateway.Connection.Producer.producers(MyApp.Gateway) |> Map.values()
+    {:consumer, args, subscribe_to: pids}
+  end
+
+  def handle_events(events, _from, state) do
+    for {type, data, shard_id} <- events do
+      handle_event(type, data, shard_id)
+    end
+
+    {:noreply, [], state}
+  end
+
+  def handle_event(
+        :MESSAGE_CREATE,
+        %{content: "ping", author: %{username: username, discriminator: discriminator}},
+        _shard_id
+      ) do
+    IO.puts("Received a ping from #{username}##{discriminator}!")
+  end
+
+  def handle_event(_, _, _), do: nil
+end
 ```

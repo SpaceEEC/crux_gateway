@@ -1,31 +1,38 @@
 defmodule Crux.Gateway.Connection.Supervisor do
   @moduledoc false
 
+  alias Crux.Gateway.{Connection, Util}
+
   use Supervisor
 
-  @registry Crux.Gateway.Registry
+  @doc """
+    Starts a `Crux.Gateway.Connection.Supervisor` process linked to the current process.
+  """
+  @spec start_link(args :: term()) :: Supervisor.on_start()
+  def start_link(args), do: Supervisor.start_link(__MODULE__, args)
 
-  def start_link(%{shard_id: shard_id} = args) do
-    name = {:via, Registry, {@registry, {shard_id, :supervisor}}}
-    Supervisor.start_link(__MODULE__, args, name: name)
-  end
+  def init(args) do
+    args =
+      args
+      |> Map.put(:sup, self())
 
-  def init(%{shard_id: shard_id} = args) do
+    dispatcher = Map.get(args, :dispatcher, GenStage.BroadcastDispatcher)
+
     children = [
-      Supervisor.child_spec(
-        {Crux.Gateway.Connection.RateLimiter, shard_id},
-        id: "rate_limiter_#{shard_id}"
-      ),
-      Supervisor.child_spec(
-        {Crux.Gateway.Connection.Producer, shard_id},
-        id: "producer_#{shard_id}"
-      ),
-      Supervisor.child_spec(
-        {Crux.Gateway.Connection, args},
-        id: "connection_#{shard_id}"
-      )
+      Connection.RateLimiter,
+      {Connection.Producer, dispatcher},
+      {Connection, args}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
   end
+
+  @spec get_rate_limiter(sup :: GenServer.server()) :: pid() | :error
+  def get_rate_limiter(sup), do: Util.get_pid(sup, Connection.RateLimiter)
+
+  @spec get_producer(sup :: GenServer.server()) :: pid() | :error
+  def get_producer(sup), do: Util.get_pid(sup, Connection.Producer)
+
+  @spec get_connection(sup :: GenServer.server()) :: pid() | :error
+  def get_connection(sup), do: Util.get_pid(sup, Connection)
 end

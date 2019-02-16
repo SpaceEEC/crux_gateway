@@ -1,79 +1,140 @@
 defmodule Crux.Gateway do
   @moduledoc """
-  Main entry point to start the Gateway connection.
+    Main entry point for `Crux.Gateway`.
 
-  Required for this to run are:
-  - `:token` to identify with, you can get your bot's from [here](https://discordapp.com/developers/applications/me).
-  > You want to keep that token secret at all times.
-
-  - `:url` to connect to. Probably something like `wss://gateway.discord.gg`.
-  (Do not append query strings)
-  > You usually want to GET the url via `/gateway/bot` along the recommended shard count.
-
-  - `:shard_count` you plan to run altogether.
-  > Can and probably should be retrieved via `/gateway/bot`.
-
-  - Optionally `:shards`, which has to be a list of numbers and ranges.
-
-  Examples: `[1..3]` `[1, 2, 3]` `[1..3, 8, 9]`
-  > If omitted all shards will be run.
-
-  - Optionally `:dispatcher`, which has to be a valid `GenStage.Dispatcher` or a tuple of one and initial state.
-  > See `Crux.Gateway.Connection.Producer` for more info.
-
-  - Optionally `:presence`, which is used for the initial presence of every session.
-    This should be a presence or a function with an arity of one (the shard id) and returning a presence.
-  > If a function, it will be invoked whenever a shard is about to identify.
-    If omitted the presence will default to online and no game.
-
+    This module fits under a supervision tree, see `start_link/1` arguments for configuration.
   """
+
+  use Supervisor
+
+  alias Crux.Gateway.{Connection, IdentifyLimiter, Util}
 
   @typedoc """
-  Used to specify or override gateway options when initially starting the connection.
-
-  See `start/1`
+    Used as initial presence for every session.
   """
-  @type gateway_options :: %{
-          optional(:token) => String.t(),
-          optional(:url) => String.t(),
-          optional(:shard_count) => pos_integer(),
-          optional(:shards) => [non_neg_integer() | Range.t()],
-          optional(:dispatcher) => GenStage.Dispatcher.t() | {GenStage.Dispatcher.t(), term()},
-          optional(:presence) => (non_neg_integer() -> map()) | map()
-        }
+  @type presence :: (non_neg_integer() -> map()) | map()
+
+  @typedoc """
+    The gateway reference
+  """
+  @type gateway :: Supervisor.supervisor()
 
   @doc """
-  Initialises the connection(s) and actually starts the gateway.
+    Starts a `Crux.Gateway` process linked to the current process.
 
-  You can specify or override `:token`, `:url`, `:shard_count` and `:shards` here via `t:gateway_options`.
+    Options are either just `t:options/0` or a tuple of `t:options/0` and `t:Supervisor.options/0`.
   """
-  @spec start(args :: gateway_options()) :: [Supervisor.on_start_child()]
-  def start(args \\ %{}) do
-    :application.ensure_started(:crux_gateway)
+  @spec start_link(
+          opts_or_tuple ::
+            options()
+            | {options(), Supervisor.options()}
+        ) :: Supervisor.on_start()
+  def start_link({gateway_opts, gen_opts}) do
+    Supervisor.start_link(__MODULE__, gateway_opts, gen_opts)
+  end
 
-    producer = Map.get(args, :dispatcher, GenStage.BroadcastDispatcher)
-    Application.put_env(:crux_gateway, :dispatcher, producer)
+  def start_link(gateway_opts) do
+    Supervisor.start_link(__MODULE__, gateway_opts)
+  end
 
-    shard_count = fetch_or_put_env(args, :shard_count, &is_number/1)
+  @typedoc """
+    Used to start `Crux.Gateway`.
+
+    See `start_link/1`
+
+    Notes:
+    - `:token` can be retrieved from [here](https://discordapp.com/developers/applications/me).
+
+    - `:url` you can GET it from `/gateway/bot` (or `Crux.Rest.gateway_bot/0`).
+
+    - `:shard_count` ^
+
+    - Optionally `:shards`, which has to be a list of numbers and ranges.
+      Examples: `[1..3]` `[1, 2, 3]` `[1..3, 8, 9]`
+      If omitted all shards will be run.
+
+    - Optionally `:dispatcher`, which has to be a valid `GenStage.Dispatcher` or a tuple of one and initial state.
+      See `Crux.Gateway.Connection.Producer` for more info.
+
+    - Optionally `:presence`, which is used for the initial presence of every session.
+      This should be a presence or a function with an arity of one (the shard id) and returning a presence.
+      If a function, it will be invoked whenever a shard is about to identify.
+      If omitted the presence will default to online and no game.
+  """
+  @type options ::
+          %{
+            required(:token) => String.t(),
+            required(:url) => String.t(),
+            required(:shard_count) => pos_integer(),
+            optional(:shards) => [non_neg_integer() | Range.t()],
+            optional(:dispatcher) => GenStage.Dispatcher.t() | {GenStage.Dispatcher.t(), term()},
+            optional(:presence) => presence()
+          }
+          | list()
+
+  @doc false
+  def init(opts) when is_list(opts), do: opts |> Map.new() |> init()
+
+  def init(opts) do
+    gateway_opts = transform_opts(opts)
+
+    gateway_opts = Map.put(gateway_opts, :gateway, self())
 
     shards =
-      case Application.fetch_env(:crux_gateway, :shards) do
-        :error ->
-          shards = Enum.to_list(0..(shard_count - 1))
-          Application.put_env(:crux_gateway, :shards, shards)
+      for shard_id <- gateway_opts.shards do
+        opts = Map.put(gateway_opts, :shard_id, shard_id)
 
-          shards
+        Supervisor.child_spec({Connection.Supervisor, opts}, id: shard_id)
+      end
 
-        {:ok, shards} when is_list(shards) ->
+    children = [
+      IdentifyLimiter
+      | shards
+    ]
+
+    Supervisor.init(children, strategy: :one_for_one)
+  end
+
+  @doc false
+  @spec get_limiter(gateway()) :: pid() | :error
+  def get_limiter(gateway), do: Util.get_pid(gateway, IdentifyLimiter)
+
+  @doc false
+  @spec get_shard(gateway(), id :: non_neg_integer()) :: pid() | :error
+  def get_shard(gateway, id) when is_integer(id), do: Util.get_pid(gateway, id)
+
+  @doc false
+  @spec get_shards(gateway()) :: %{required(non_neg_integer()) => pid()} | :error
+  def get_shards(gateway) do
+    gateway
+    |> Supervisor.which_children()
+    |> Enum.filter(fn
+      {id, _pid, _type, _module} when is_integer(id) -> true
+      _ -> false
+    end)
+    |> Map.new(fn {id, pid, _type, _module} -> {id, pid} end)
+  end
+
+  defp transform_opts(
+         %{
+           shard_count: shard_count,
+           url: url,
+           token: token
+         } = opts
+       )
+       when is_number(shard_count) and shard_count > 0 and is_binary(url) and is_binary(token) do
+    opts =
+      case opts do
+        %{shards: shards} ->
           shards =
             shards
-            |> Enum.flat_map(&map_shard/1)
+            |> Enum.flat_map(&map_shard(&1, shards))
             |> Enum.uniq()
             |> Enum.sort()
 
           if Enum.min(shards) < 0 do
             raise """
-            Specified shards are out of range.
+            :shards are out of range.
             A negative shard id is not valid
 
             :shards resolved to:
@@ -83,83 +144,57 @@ defmodule Crux.Gateway do
 
           if Enum.max(shards) >= shard_count do
             raise """
-            Specified shards are out of range.
-            Shard ids must be lower than shard_count
+            :shards are out of range.
+            Shard ids must be lower than shard_count (#{shard_count})
 
             :shards resolved to:
             #{inspect(shards)}
             """
           end
 
-          Application.put_env(:crux_gateway, :shards, shards)
-
-          shards
+          %{opts | shards: shards}
 
         _ ->
-          raise_shards()
+          Map.put(opts, :shards, Enum.to_list(0..(shard_count - 1)))
       end
 
-    %{
-      url: fetch_or_put_env(args, :url, &is_bitstring/1),
-      token: fetch_or_put_env(args, :token, &is_bitstring/1),
-      shard_count: shard_count,
-      presence: fetch_or_put_env(args, :presence, &validate_presence/1)
-    }
-    |> Crux.Gateway.Supervisor.start_gateway(shards)
-  end
+    case opts do
+      %{presence: %{}} ->
+        nil
 
-  defp fetch_or_put_env(args, atom, validator) do
-    value =
-      case args do
-        %{^atom => value} ->
-          Application.put_env(:crux_gateway, atom, value)
+      %{presence: p} when is_function(p, 1) ->
+        nil
 
-          value
+      %{presence: nil} ->
+        nil
 
-        _ ->
-          Application.get_env(:crux_gateway, atom)
-      end
+      %{presence: other} ->
+        raise """
+        :presence is not of the correct type.
 
-    if validator.(value) do
-      value
-    else
-      raise """
-      :#{inspect(atom)} is not of the correct type.
+        Received:
+        #{inspect(other)}
+        """
 
-      Received:
-      #{inspect(value)}
-      """
+      _ ->
+        nil
     end
+
+    opts
   end
 
-  defp map_shard(num) when is_number(num), do: [num]
-  defp map_shard(%Range{} = range), do: range
+  defp map_shard(num, _shards) when is_number(num), do: [num]
+  defp map_shard(%Range{} = range, _shards), do: range
 
-  defp map_shard(other) do
+  defp map_shard(other, shards) do
     """
+    :shards must be a list of numbers and/or ranges
+
+    Received :shards value:
+    #{inspect(shards)}
 
     Faulty element:
     #{inspect(other)}
     """
-    |> raise_shards()
   end
-
-  @spec raise_shards(suffix :: String.t()) :: no_return()
-  defp raise_shards(suffix \\ "") do
-    raise """
-          :shards must be a list of numbers and/or ranges
-
-          Received :shards value:
-          #{inspect(Application.fetch_env!(:crux_gateway, :shards))}
-          """ <> suffix
-  end
-
-  defp validate_presence(p)
-       when is_nil(p)
-       when is_map(p)
-       when is_function(p, 1) do
-    true
-  end
-
-  defp validate_presence(_p), do: false
 end

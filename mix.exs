@@ -1,7 +1,7 @@
 defmodule Crux.Gateway.MixProject do
   use Mix.Project
 
-  @vsn "0.1.4"
+  @vsn "0.2.0-dev"
   @name :crux_gateway
 
   def project do
@@ -33,10 +33,7 @@ defmodule Crux.Gateway.MixProject do
   end
 
   def application do
-    [
-      extra_applications: [:logger],
-      mod: {Crux.Gateway.Application, []}
-    ]
+    [extra_applications: [:logger]]
   end
 
   defp deps do
@@ -45,7 +42,11 @@ defmodule Crux.Gateway.MixProject do
       {:websockex, "~> 0.4.1"},
       {:poison, "~> 3.1.0"},
       {:credo, "~> 0.9.2", only: [:dev, :test], runtime: false},
-      {:ex_doc, git: "https://github.com/spaceeec/ex_doc", only: :dev, runtime: false}
+      {:ex_doc,
+       git: "https://github.com/spaceeec/ex_doc",
+       branch: "feat/umbrella",
+       only: :dev,
+       runtime: false}
     ]
   end
 end

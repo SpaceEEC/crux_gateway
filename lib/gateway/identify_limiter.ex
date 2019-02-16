@@ -1,83 +1,55 @@
 defmodule Crux.Gateway.IdentifyLimiter do
-  @moduledoc """
-    Handles the [Identifying](https://discordapp.com/developers/docs/topics/gateway#identifying) rate limit of 1 per 5 seconds.
+  # Handles the identify rate limit of 1 per 5 seconds.
+  # https://discordapp.com/developers/docs/topics/gateway#identifying
+  @moduledoc false
 
-    This module is automatically used by `Crux.Gateway.Connection`, you do not need to worry about it.
-  """
+  alias Crux.Gateway
 
   use GenServer
 
   require Logger
 
-  @timeout 5500
-  # + 500 for sanity
+  # 500 for sanity
+  @timeout 5000 + 500
 
   @doc """
-    Starts the identify limiter.
+    Starts a `Crux.Gateway.IdentifyLimiter` process linked to the current process.
   """
-  def start_link(_args), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
+  @spec start_link(args :: any()) :: GenServer.on_start()
+  def start_link(args), do: GenServer.start_link(__MODULE__, args)
 
   @doc """
-    Starts the module if necessary and queues the packet.
-    Blocks the process until the identify may be sent.
-
-    The packets will return in the order as they arrive at the rate limiter, those are sent via `GenServer.call/2`.
-    Returns the `packet` as is.
+    Blocks the calling process until an identify may be sent.
 
     Automatically used by `Crux.Gateway.Connection`.
   """
-  @spec queue(packet :: term(), shard_id :: non_neg_integer()) :: term()
-  def queue(packet, shard_id \\ nil) do
-    case GenServer.whereis(__MODULE__) do
-      pid when is_pid(pid) ->
-        GenServer.call(pid, {:queue, {packet, shard_id}}, :infinity)
-
-      _ ->
-        Supervisor.start_child(
-          Crux.Gateway.Supervisor,
-          Supervisor.child_spec(
-            __MODULE__,
-            id: __MODULE__,
-            restart: :temporary
-          )
-        )
-
-        queue(packet, shard_id)
-    end
+  @spec queue(gateway :: Crux.Gateway.gateway()) :: :ok
+  def queue(gateway) do
+    gateway
+    |> Gateway.get_limiter()
+    |> GenServer.call(:queue, :infinity)
   end
 
   @doc false
-  def init(:ok) do
+  def init(_args) do
     Logger.debug("[Crux][Gateway][IdentifyLimiter]: Starting")
 
-    # {timer_reference, ratelimit_reset}
-    state = {nil, 0}
+    # ratelimit reset
+    state = 0
 
     {:ok, state}
   end
 
   @doc false
-  def handle_info(:stop, state) do
-    Logger.debug("[Crux][Gateway][IdentifyLimiter]: Stopping")
+  def handle_call(:queue, _from, ratelimit_reset) do
+    now = :os.system_time(:milli_seconds)
 
-    {:stop, :normal, state}
-  end
-
-  @doc false
-  def handle_call({:queue, {packet, shard_id}}, _from, {nil, ratelimit_reset}) do
-    if ratelimit_reset > :os.system_time(:milli_seconds) do
-      :timer.sleep(ratelimit_reset - :os.system_time(:milli_seconds))
+    if ratelimit_reset > now do
+      :timer.sleep(ratelimit_reset - now)
     end
 
-    Logger.debug("[Crux][Gateway][IdentifyLimiter]: Sending identify for shard #{shard_id}")
-    {:ok, timer_reference} = :timer.send_after(@timeout, :stop)
+    Logger.debug("[Crux][Gateway][IdentifyLimiter]: Sending identify")
 
-    {:reply, packet, {timer_reference, :os.system_time(:milli_seconds) + @timeout}}
-  end
-
-  def handle_call({:queue, _packet} = message, from, {timer_reference, ratelimit_reset}) do
-    :timer.cancel(timer_reference)
-
-    handle_call(message, from, {nil, ratelimit_reset})
+    {:reply, :ok, :os.system_time(:milli_seconds) + @timeout}
   end
 end

@@ -1,9 +1,5 @@
 defmodule Crux.Gateway.Util do
-  @moduledoc """
-    Collection of util functions.
-
-    Both functions are identical to the ones in `Crux.Structs.Util`.
-  """
+  @moduledoc false
 
   @doc """
     Converts a string to an atom.
@@ -24,4 +20,21 @@ defmodule Crux.Gateway.Util do
   def atomify(other), do: other
 
   defp atomify_kv({k, v}), do: {string_to_atom(k), atomify(v)}
+
+  @doc """
+    Gets the pid of a supervised process by id and the supervisor.
+  """
+  @spec get_pid(sup :: Supervisor.supervisor(), id :: term()) :: pid() | :error
+  def get_pid(sup, id) do
+    sup
+    |> Supervisor.which_children()
+    |> Enum.find(fn
+      {^id, _pid, _type, _modules} -> true
+      _ -> false
+    end)
+    |> case do
+      {^id, pid, _type, _modules} -> pid
+      _ -> :error
+    end
+  end
 end
