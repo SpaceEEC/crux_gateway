@@ -1,6 +1,8 @@
 defmodule Crux.Gateway do
   @moduledoc """
-    Main entry point.
+    Main entry point for `Crux.Gateway`.
+
+    This module fits under a supervision tree, see `start_link/1` arguments for configuration.
   """
 
   use Supervisor
