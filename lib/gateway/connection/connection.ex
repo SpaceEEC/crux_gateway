@@ -226,7 +226,7 @@ defmodule Crux.Gateway.Connection do
 
     buffer = buffer <> frame
 
-    {vuffer, packet} =
+    {buffer, packet} =
       if suffix == <<0, 0, 255, 255>> do
         uncompressed =
           buffer
@@ -249,7 +249,7 @@ defmodule Crux.Gateway.Connection do
         state
       end
 
-    state = %{state | zlib: {vuffer, z}}
+    state = %{state | zlib: {buffer, z}}
 
     {:ok, state}
   end
