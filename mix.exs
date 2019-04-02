@@ -41,7 +41,7 @@ defmodule Crux.Gateway.MixProject do
       {:gen_stage, "~> 0.13.1"},
       {:websockex, "~> 0.4.1"},
       {:poison, "~> 3.1.0"},
-      {:credo, "~> 0.9.2", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.0.0", only: [:dev, :test], runtime: false},
       {:ex_doc,
        git: "https://github.com/spaceeec/ex_doc",
        branch: "feat/umbrella",

@@ -73,12 +73,14 @@ defmodule Crux.Gateway do
           | list()
 
   @doc false
+  @spec init(term()) :: {:ok, tuple()}
   def init(opts) when is_list(opts), do: opts |> Map.new() |> init()
 
   def init(opts) do
-    gateway_opts = transform_opts(opts)
-
-    gateway_opts = Map.put(gateway_opts, :gateway, self())
+    gateway_opts =
+      opts
+      |> transform_opts()
+      |> Map.put(gateway_opts, :gateway, self())
 
     shards =
       for shard_id <- gateway_opts.shards do
@@ -158,29 +160,24 @@ defmodule Crux.Gateway do
           Map.put(opts, :shards, Enum.to_list(0..(shard_count - 1)))
       end
 
-    case opts do
-      %{presence: %{}} ->
-        nil
-
-      %{presence: p} when is_function(p, 1) ->
-        nil
-
-      %{presence: nil} ->
-        nil
-
-      %{presence: other} ->
-        raise """
-        :presence is not of the correct type.
-
-        Received:
-        #{inspect(other)}
-        """
-
-      _ ->
-        nil
+    if Map.has_key?(opts, :presence) do
+      raise_invalid_presence(opts.presence)
     end
 
     opts
+  end
+
+  defp raise_invalid_presence(%{}), do: nil
+  defp raise_invalid_presence(p) when is_function(p, 1), do: nil
+  defp raise_invalid_presence(nil), do: nil
+
+  defp raise_invald_presence(other) do
+    raise """
+    :presence is not of the correct type.
+
+    Received:
+    #{inspect(other)}
+    """
   end
 
   defp map_shard(num, _shards) when is_number(num), do: [num]

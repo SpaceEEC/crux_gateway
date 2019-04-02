@@ -3,8 +3,8 @@ defmodule Crux.Gateway.Connection do
     Module handling the actual connection (shard) to Discord.
   """
   alias Crux.Gateway
-  alias Crux.Gateway.{Connection, Command, IdentifyLimiter, Util}
-  alias Crux.Gateway.Connection.{RateLimiter, Producer}
+  alias Crux.Gateway.{Command, Connection, IdentifyLimiter, Util}
+  alias Crux.Gateway.Connection.{Producer, RateLimiter}
 
   use WebSockex
 
@@ -64,6 +64,7 @@ defmodule Crux.Gateway.Connection do
   end
 
   @doc false
+  @spec handle_connect(term(), term()) :: term()
   def handle_connect(con, [%{shard_id: shard_id} = args]) do
     Logger.info(fn -> "[Crux][Gateway][Shard #{shard_id}]: Connected" end)
 
@@ -100,6 +101,7 @@ defmodule Crux.Gateway.Connection do
     {:ok, state}
   end
 
+  @spec handle_disconnect(term(), term()) :: term()
   def handle_disconnect(reason, %{hello_timeout: ref} = state) do
     if ref do
       :timer.cancel(ref)
@@ -176,6 +178,7 @@ defmodule Crux.Gateway.Connection do
   end
 
   @doc false
+  @spec handle_info(term(), term()) :: term()
   def handle_info(:stop, state), do: {:close, {1000, "Closing connection"}, state}
   def handle_info({:send, frame}, state), do: {:reply, frame, state}
 
@@ -204,6 +207,7 @@ defmodule Crux.Gateway.Connection do
     {:close, {4000, @hello_timeout_message}, state}
   end
 
+  @spec handle_info(term(), term()) :: {:ok, term()}
   def handle_info(other, %{shard_id: shard_id} = state) do
     Logger.warn(fn ->
       "[Crux][Gateway][Shard #{shard_id}]: Received unexpected message: #{inspect(other)}"
@@ -213,6 +217,7 @@ defmodule Crux.Gateway.Connection do
   end
 
   @doc false
+  @spec terminate(term(), term()) :: nil
   def terminate(reason, %{shard_id: shard_id}) do
     Logger.warn(fn ->
       "[Crux][Gateway][Shard #{shard_id}]: Terminating due to #{inspect(reason)}"
@@ -220,13 +225,14 @@ defmodule Crux.Gateway.Connection do
   end
 
   @doc false
+  @spec handle_frame(term(), term()) :: {:ok, term()}
   def handle_frame({:binary, frame}, %{zlib: {buffer, z}} = state) do
     frame_size = byte_size(frame) - 4
     <<_data::binary-size(frame_size), suffix::binary>> = frame
 
     buffer = buffer <> frame
 
-    {buffer, packet} =
+    {new_buffer, packet} =
       if suffix == <<0, 0, 255, 255>> do
         uncompressed =
           buffer
@@ -249,7 +255,7 @@ defmodule Crux.Gateway.Connection do
         state
       end
 
-    state = %{state | zlib: {buffer, z}}
+    state = %{state | zlib: {new_buffer, z}}
 
     {:ok, state}
   end
@@ -275,7 +281,7 @@ defmodule Crux.Gateway.Connection do
          } = packet
        ) do
     Logger.info(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Ready #{packet.d._trace |> Enum.join(" -> ")}"
+      "[Crux][Gateway][Shard #{shard_id}]: Ready #{Enum.join(packet.d._trace, " -> ")}"
     end)
 
     Producer.dispatch(sup, packet, shard_id)

@@ -27,6 +27,7 @@ defmodule Crux.Gateway.Connection.RateLimiter do
   end
 
   @doc false
+  @spec init(term()) :: {:ok, tuple()}
   def init(_args) do
     state = %{
       remaining: @limit,
@@ -37,6 +38,7 @@ defmodule Crux.Gateway.Connection.RateLimiter do
   end
 
   @doc false
+  @spec handle_call(term(), GenServer.from(), term()) :: term()
   def handle_call(:queue, from, %{remaining: 0, reset: reset} = state) do
     case reset - :os.system_time(:seconds) do
       reset when reset > 0 ->

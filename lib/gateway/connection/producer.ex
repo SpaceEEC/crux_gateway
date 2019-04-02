@@ -37,6 +37,7 @@ defmodule Crux.Gateway.Connection.Producer do
   end
 
   @doc false
+  @spec init(term()) :: {:ok, tuple()}
   def init(dispatcher) do
     state = {
       :queue.new(),
@@ -48,6 +49,7 @@ defmodule Crux.Gateway.Connection.Producer do
   end
 
   @doc false
+  @spec handle_cast(term(), term()) :: {:noreply, list(), term()}
   def handle_cast({:dispatch, event}, {queue, demand}) do
     event
     |> :queue.in(queue)
@@ -55,6 +57,7 @@ defmodule Crux.Gateway.Connection.Producer do
   end
 
   @doc false
+  @spec handle_demand(term(), term()) :: {:noreply, list(), term()}
   def handle_demand(incoming_demand, {queue, demand}) do
     dispatch_events(queue, incoming_demand + demand, [])
   end

@@ -1,4 +1,6 @@
 defmodule Crux.Gateway.Command do
+  # credo:disable-for-this-file Credo.Check.Readability.SinglePipe
+
   @moduledoc """
   Builds [Gateway Commands](https://discordapp.com/developers/docs/topics/gateway#commands-and-events-gateway-commands).
   Note: Only the sent ones can be found here.
@@ -56,7 +58,8 @@ defmodule Crux.Gateway.Command do
 
   def identify(%{shard_id: shard_id, shard_count: shard_count, token: token} = args) do
     presence =
-      case args do
+      args
+      |> case do
         %{presence: presence} when is_map(presence) ->
           presence
 

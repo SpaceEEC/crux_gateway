@@ -22,3 +22,8 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 crux_gateway-*.tar
 
+# VS Code plugin
+.elixir_ls/
+
+# Test file
+lib/test.ex

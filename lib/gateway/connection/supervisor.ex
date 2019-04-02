@@ -11,10 +11,9 @@ defmodule Crux.Gateway.Connection.Supervisor do
   @spec start_link(args :: term()) :: Supervisor.on_start()
   def start_link(args), do: Supervisor.start_link(__MODULE__, args)
 
+  @spec init(term()) :: {:ok, tuple()}
   def init(args) do
-    args =
-      args
-      |> Map.put(:sup, self())
+    args = Map.put(args, :sup, self())
 
     dispatcher = Map.get(args, :dispatcher, GenStage.BroadcastDispatcher)
 

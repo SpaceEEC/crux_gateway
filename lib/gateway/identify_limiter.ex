@@ -31,6 +31,7 @@ defmodule Crux.Gateway.IdentifyLimiter do
   end
 
   @doc false
+  @spec init(term()) :: {:ok, term()}
   def init(_args) do
     Logger.debug("[Crux][Gateway][IdentifyLimiter]: Starting")
 
@@ -41,6 +42,7 @@ defmodule Crux.Gateway.IdentifyLimiter do
   end
 
   @doc false
+  @spec handle_call(term(), GenServer.from(), term()) :: term()
   def handle_call(:queue, _from, ratelimit_reset) do
     now = :os.system_time(:milli_seconds)
 
