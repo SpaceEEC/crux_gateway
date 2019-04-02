@@ -80,7 +80,7 @@ defmodule Crux.Gateway do
     gateway_opts =
       opts
       |> transform_opts()
-      |> Map.put(gateway_opts, :gateway, self())
+      |> Map.put(:gateway, self())
 
     shards =
       for shard_id <- gateway_opts.shards do
