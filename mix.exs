@@ -1,7 +1,7 @@
 defmodule Crux.Gateway.MixProject do
   use Mix.Project
 
-  @vsn "0.2.0-dev"
+  @vsn "0.2.0"
   @name :crux_gateway
 
   def project do

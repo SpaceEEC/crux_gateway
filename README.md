@@ -1,22 +1,22 @@
 # Crux.Gateway
 
-Package providing a flexible gateway connection to the Discord API.
+Library providing a flexible gateway connection to the Discord API.
 
 ## Useful links
 
- - [Documentation](https://hexdocs.pm/crux_gateway/0.1.4/)
+ - [Documentation](https://hexdocs.pm/crux_gateway/0.2.0/)
  - [Github](https://github.com/SpaceEEC/crux_gateway/)
- - [Changelog](https://github.com/SpaceEEC/crux_gateway/releases/tag/0.1.4/)
+ - [Changelog](https://github.com/SpaceEEC/crux_gateway/releases/tag/0.2.0/)
  - [Umbrella Development Documentation](https://crux.randomly.space/)
 
 ## Installation
 
-The package can be installed by adding `crux_gateway` to your list of dependencies in `mix.exs`:
+The library can be installed by adding `crux_gateway` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:crux_gateway, "~> 0.1.4"}
+    {:crux_gateway, "~> 0.2.0"}
   ]
 end
 ```
