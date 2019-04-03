@@ -171,7 +171,7 @@ defmodule Crux.Gateway do
   defp raise_invalid_presence(p) when is_function(p, 1), do: nil
   defp raise_invalid_presence(nil), do: nil
 
-  defp raise_invald_presence(other) do
+  defp raise_invalid_presence(other) do
     raise """
     :presence is not of the correct type.
 
