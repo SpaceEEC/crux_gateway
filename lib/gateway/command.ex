@@ -26,7 +26,7 @@ defmodule Crux.Gateway.Command do
   """
 
   @typedoc """
-    Encoded command ready to be sent to the gateway via `Crux.Gateway.Connection.send_command/2`.
+    Encoded command ready to be sent to the gateway via `Crux.Gateway.Connection.send_command/3`.
 
     If you want to build custom commands,
     pass `:erlang.term_to_binary/1` a map with the keys `op` and `d`,
