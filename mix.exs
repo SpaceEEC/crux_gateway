@@ -14,7 +14,8 @@ defmodule Crux.Gateway.MixProject do
       description: "Package providing a flexible gateway connection to the Discord API.",
       source_url: "https://github.com/SpaceEEC/#{@name}/",
       homepage_url: "https://github.com/SpaceEEC/#{@name}/",
-      deps: deps()
+      deps: deps(),
+      aliases: aliases()
     ]
   end
 
@@ -48,5 +49,33 @@ defmodule Crux.Gateway.MixProject do
        only: :dev,
        runtime: false}
     ]
+  end
+
+  defp aliases() do
+    [
+      docs: ["docs", &generate_config/1]
+    ]
+  end
+
+  def generate_config(_) do
+    config =
+      System.cmd("git", ["tag"])
+      |> elem(0)
+      |> String.split("\n")
+      |> Enum.slice(0..-2)
+      |> Enum.map(&%{"url" => "https://hexdocs.pm/#{@name}/" <> &1, "version" => &1})
+      |> Enum.reverse()
+      |> Poison.encode!()
+
+    config = "var versionNodes = " <> config
+
+    __ENV__.file
+    |> Path.split()
+    |> Enum.slice(0..-2)
+    |> Kernel.++(["doc", "docs_config.js"])
+    |> Enum.join("/")
+    |> File.write!(config)
+
+    Mix.Shell.IO.info(~S{Generated "doc/docs_config.js".})
   end
 end
