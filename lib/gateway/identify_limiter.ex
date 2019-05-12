@@ -44,7 +44,7 @@ defmodule Crux.Gateway.IdentifyLimiter do
   @doc false
   @spec handle_call(term(), GenServer.from(), term()) :: term()
   def handle_call(:queue, _from, ratelimit_reset) do
-    now = :os.system_time(:milli_seconds)
+    now = :os.system_time(:millisecond)
 
     if ratelimit_reset > now do
       :timer.sleep(ratelimit_reset - now)
@@ -52,6 +52,6 @@ defmodule Crux.Gateway.IdentifyLimiter do
 
     Logger.debug("[Crux][Gateway][IdentifyLimiter]: Sending identify")
 
-    {:reply, :ok, :os.system_time(:milli_seconds) + @timeout}
+    {:reply, :ok, :os.system_time(:millisecond) + @timeout}
   end
 end
