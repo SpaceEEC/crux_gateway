@@ -275,20 +275,18 @@ defmodule Crux.Gateway.Connection do
          %{
            t: :READY,
            d: %{
-             _trace: trace,
              session_id: session_id
            }
          } = packet
        ) do
     Logger.info(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Ready #{Enum.join(packet.d._trace, " -> ")}"
+      "[Crux][Gateway][Shard #{shard_id}]: Ready"
     end)
 
     Producer.dispatch(sup, packet, shard_id)
 
     state
     |> Map.delete(:close_seq)
-    |> Map.put(:trace, trace)
     |> Map.put(:session, session_id)
   end
 
