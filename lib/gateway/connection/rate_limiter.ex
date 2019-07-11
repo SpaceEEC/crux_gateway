@@ -10,6 +10,11 @@ defmodule Crux.Gateway.Connection.RateLimiter do
   @reset 60
   @limit 120
 
+  @typep state :: %{
+           remaining: non_neg_integer(),
+           reset: non_neg_integer()
+         }
+
   @doc """
     Starts a `Crux.Gateway.Connection.RateLimiter` process linked to the current process.
   """
@@ -27,7 +32,7 @@ defmodule Crux.Gateway.Connection.RateLimiter do
   end
 
   @doc false
-  @spec init(term()) :: {:ok, tuple()}
+  @spec init(term()) :: {:ok, state()}
   def init(_args) do
     state = %{
       remaining: @limit,
@@ -38,7 +43,7 @@ defmodule Crux.Gateway.Connection.RateLimiter do
   end
 
   @doc false
-  @spec handle_call(term(), GenServer.from(), term()) :: term()
+  @spec handle_call(term(), GenServer.from(), state()) :: {:reply, :ok, state()}
   def handle_call(:queue, from, %{remaining: 0, reset: reset} = state) do
     case reset - :os.system_time(:seconds) do
       reset when reset > 0 ->

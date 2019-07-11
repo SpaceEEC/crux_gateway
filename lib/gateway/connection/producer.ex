@@ -14,6 +14,11 @@ defmodule Crux.Gateway.Connection.Producer do
 
   use GenStage
 
+  @typep state :: {
+           queue :: :queue.queue(request :: term()),
+           demand :: non_neg_integer()
+         }
+
   @doc false
   @spec start_link(args :: any()) :: GenServer.on_start()
   def start_link(args), do: GenStage.start_link(__MODULE__, args)
@@ -37,7 +42,7 @@ defmodule Crux.Gateway.Connection.Producer do
   end
 
   @doc false
-  @spec init(term()) :: {:ok, tuple()}
+  @spec init(term()) :: {:producer, state(), term()}
   def init(dispatcher) do
     state = {
       :queue.new(),
@@ -49,7 +54,7 @@ defmodule Crux.Gateway.Connection.Producer do
   end
 
   @doc false
-  @spec handle_cast(term(), term()) :: {:noreply, list(), term()}
+  @spec handle_cast(term(), term()) :: {:noreply, list(), state()}
   def handle_cast({:dispatch, event}, {queue, demand}) do
     event
     |> :queue.in(queue)
@@ -57,7 +62,7 @@ defmodule Crux.Gateway.Connection.Producer do
   end
 
   @doc false
-  @spec handle_demand(term(), term()) :: {:noreply, list(), term()}
+  @spec handle_demand(term(), term()) :: {:noreply, list(), state()}
   def handle_demand(incoming_demand, {queue, demand}) do
     dispatch_events(queue, incoming_demand + demand, [])
   end

@@ -11,7 +11,7 @@ defmodule Crux.Gateway.Connection.Supervisor do
   @spec start_link(args :: term()) :: Supervisor.on_start()
   def start_link(args), do: Supervisor.start_link(__MODULE__, args)
 
-  @spec init(term()) :: {:ok, tuple()}
+  @spec init(term()) :: {:ok, {:supervisor.sup_flags(), [:supervisor.child_spec()]}} | :ignore
   def init(args) do
     args = Map.put(args, :sup, self())
 

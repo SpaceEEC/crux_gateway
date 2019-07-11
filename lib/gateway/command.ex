@@ -39,7 +39,7 @@ defmodule Crux.Gateway.Command do
 
   Used to signalize the server that the client is still alive and able to receive messages.
   """
-  @spec heartbeat(sequence :: integer()) :: command()
+  @spec heartbeat(sequence :: non_neg_integer() | nil) :: command()
   def heartbeat(sequence), do: finalize(sequence, 1)
 
   @doc """
@@ -50,7 +50,7 @@ defmodule Crux.Gateway.Command do
   @spec identify(
           data :: %{
             :shard_id => non_neg_integer(),
-            :shard_count => non_neg_integer(),
+            :shard_count => pos_integer(),
             :token => String.t(),
             optional(:presence) => Crux.Gateway.presence()
           }
@@ -179,7 +179,7 @@ defmodule Crux.Gateway.Command do
   """
   @spec resume(
           data :: %{
-            :seq => non_neg_integer(),
+            seq: non_neg_integer(),
             token: String.t(),
             session: String.t()
           }
@@ -194,9 +194,9 @@ defmodule Crux.Gateway.Command do
   end
 
   @spec finalize(
-          data :: %{String.t() => map() | String.t()},
+          data :: %{String.t() => map() | String.t()} | non_neg_integer() | nil,
           op :: integer()
-        ) :: {:binary, binary()}
+        ) :: command()
   defp finalize(data, op) do
     data =
       %{

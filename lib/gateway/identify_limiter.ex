@@ -42,7 +42,7 @@ defmodule Crux.Gateway.IdentifyLimiter do
   end
 
   @doc false
-  @spec handle_call(term(), GenServer.from(), term()) :: term()
+  @spec handle_call(term(), GenServer.from(), term()) :: {:reply, :ok, integer()}
   def handle_call(:queue, _from, ratelimit_reset) do
     now = :os.system_time(:millisecond)
 

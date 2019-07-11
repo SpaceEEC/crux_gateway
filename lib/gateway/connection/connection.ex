@@ -18,6 +18,25 @@ defmodule Crux.Gateway.Connection do
   @heartbeat_timeout 20_000
   @heartbeat_timeout_message "Did not receive heartbeat ack after 20 seconds"
 
+  @typep state :: %{
+           # static
+           required(:token) => String.t(),
+           required(:url) => String.t(),
+           required(:shard_count) => pos_integer(),
+           required(:shard_id) => non_neg_integer(),
+           required(:presence) => Gateway.presence(),
+           required(:gateway) => pid(),
+           required(:sup) => pid(),
+           # per session
+           optional(:session) => String.t(),
+           optional(:seq) => non_neg_integer(),
+           optional(:zlib) => :zlib.zstream(),
+           optional(:hello_timeout) => :timer.tref(),
+           optional(:heartbeat) => :timer.tref(),
+           optional(:heartbeat_timeout) => :timer.tref(),
+           optional(:close_seq) => non_neg_integer()
+         }
+
   @doc false
   @spec start_link(args :: map()) :: {:ok, pid} | {:error, term}
   def start_link(%{url: url, shard_id: shard_id} = args) do
@@ -64,7 +83,7 @@ defmodule Crux.Gateway.Connection do
   end
 
   @doc false
-  @spec handle_connect(term(), term()) :: term()
+  @spec handle_connect(term(), term()) :: {:ok, state()}
   def handle_connect(con, [%{shard_id: shard_id} = args]) do
     Logger.info(fn -> "[Crux][Gateway][Shard #{shard_id}]: Connected" end)
 
@@ -101,7 +120,7 @@ defmodule Crux.Gateway.Connection do
     {:ok, state}
   end
 
-  @spec handle_disconnect(term(), term()) :: term()
+  @spec handle_disconnect(map(), state()) :: {:reconnect, state()}
   def handle_disconnect(reason, %{hello_timeout: ref} = state) do
     if ref do
       :timer.cancel(ref)
@@ -178,7 +197,10 @@ defmodule Crux.Gateway.Connection do
   end
 
   @doc false
-  @spec handle_info(term(), term()) :: term()
+  @spec handle_info(term(), state()) ::
+          {:close, WebSockex.close_frame(), state()}
+          | {:reply, WebSockex.frame(), state()}
+          | {:ok, state()}
   def handle_info(:stop, state), do: {:close, {1000, "Closing connection"}, state}
   def handle_info({:send, frame}, state), do: {:reply, frame, state}
 
@@ -189,7 +211,7 @@ defmodule Crux.Gateway.Connection do
 
     command =
       state
-      |> Map.get(:seq)
+      |> Map.get(:seq, nil)
       |> Command.heartbeat()
 
     self_send(command, sup)
@@ -207,7 +229,6 @@ defmodule Crux.Gateway.Connection do
     {:close, {4000, @hello_timeout_message}, state}
   end
 
-  @spec handle_info(term(), term()) :: {:ok, term()}
   def handle_info(other, %{shard_id: shard_id} = state) do
     Logger.warn(fn ->
       "[Crux][Gateway][Shard #{shard_id}]: Received unexpected message: #{inspect(other)}"
@@ -222,10 +243,12 @@ defmodule Crux.Gateway.Connection do
     Logger.warn(fn ->
       "[Crux][Gateway][Shard #{shard_id}]: Terminating due to #{inspect(reason)}"
     end)
+
+    nil
   end
 
   @doc false
-  @spec handle_frame(term(), term()) :: {:ok, term()}
+  @spec handle_frame(term(), state()) :: {:ok, state()}
   def handle_frame({:binary, frame}, %{zlib: {buffer, z}} = state) do
     frame_size = byte_size(frame) - 4
     <<_data::binary-size(frame_size), suffix::binary>> = frame
@@ -270,6 +293,7 @@ defmodule Crux.Gateway.Connection do
   defp handle_sequence(state, %{s: s}), do: Map.put(state, :seq, s)
   defp handle_sequence(state, _packet), do: state
 
+  @spec handle_packet(state(), map()) :: state()
   defp handle_packet(
          %{sup: sup, shard_id: shard_id} = state,
          %{
@@ -324,10 +348,14 @@ defmodule Crux.Gateway.Connection do
   end
 
   # 9 - Invalid Session - Resume
-  defp handle_packet(%{sup: sup, shard_id: shard_id, seq: _seq, session: _session} = state, %{
-         op: 9,
-         d: true
-       }) do
+  defp handle_packet(
+         %{sup: sup, shard_id: shard_id, seq: seq, session: session, token: token} = state,
+         %{
+           op: 9,
+           d: true
+         }
+       )
+       when is_binary(token) and is_binary(session) and is_integer(seq) and seq > 0 do
     Logger.warn(fn ->
       "[Crux][Gateway][Shard #{shard_id}]: Invalid session, will try to resume"
     end)

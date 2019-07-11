@@ -73,7 +73,7 @@ defmodule Crux.Gateway do
           | list()
 
   @doc false
-  @spec init(term()) :: {:ok, tuple()}
+  @spec init(term()) :: {:ok, {:supervisor.sup_flags(), [:supervisor.child_spec()]}} | :ignore
   def init(opts) when is_list(opts), do: opts |> Map.new() |> init()
 
   def init(opts) do
