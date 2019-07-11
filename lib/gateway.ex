@@ -129,49 +129,16 @@ defmodule Crux.Gateway do
          } = opts
        )
        when is_number(shard_count) and shard_count > 0 and is_binary(url) and is_binary(token) do
-    opts =
-      case opts do
-        %{shards: shards} ->
-          shards =
-            shards
-            |> Enum.flat_map(&map_shard(&1, shards))
-            |> Enum.uniq()
-            |> Enum.sort()
-
-          if Enum.min(shards) < 0 do
-            raise """
-            :shards are out of range.
-            A negative shard id is not valid
-
-            :shards resolved to:
-            #{inspect(shards)}
-            """
-          end
-
-          if Enum.max(shards) >= shard_count do
-            raise """
-            :shards are out of range.
-            Shard ids must be lower than shard_count (#{shard_count})
-
-            :shards resolved to:
-            #{inspect(shards)}
-            """
-          end
-
-          %{opts | shards: shards}
-
-        _ ->
-          Map.put(opts, :shards, Enum.to_list(0..(shard_count - 1)))
-      end
+    opts = transform_shards(opts, shard_count)
 
     if Map.has_key?(opts, :presence) do
-      raise_invalid_presence(opts.presence)
+      validate_presence(opts.presence)
     end
 
     case opts do
       %{guild_subscriptions: invalid} when not is_boolean(invalid) ->
         raise """
-          :guild_subscriptions must be a boolean or omitted.
+          :guild_subscriptions must be a boolean if presenc.
 
           Received:
           #{inspect(invalid)}
@@ -184,11 +151,45 @@ defmodule Crux.Gateway do
     opts
   end
 
-  defp raise_invalid_presence(%{}), do: nil
-  defp raise_invalid_presence(p) when is_function(p, 1), do: nil
-  defp raise_invalid_presence(nil), do: nil
+  defp transform_shards(%{shards: shards} = opts, shard_count) do
+    shards =
+      shards
+      |> Enum.flat_map(&map_shard(&1, shards))
+      |> Enum.uniq()
+      |> Enum.sort()
 
-  defp raise_invalid_presence(other) do
+    if Enum.min(shards) < 0 do
+      raise """
+      :shards are out of range.
+      A negative shard id is not valid
+
+      :shards resolved to:
+      #{inspect(shards)}
+      """
+    end
+
+    if Enum.max(shards) >= shard_count do
+      raise """
+      :shards are out of range.
+      Shard ids must be lower than shard_count (#{shard_count})
+
+      :shards resolved to:
+      #{inspect(shards)}
+      """
+    end
+
+    %{opts | shards: shards}
+  end
+
+  defp transform_shards(opts, shard_count) do
+    Map.put(opts, :shards, Enum.to_list(0..(shard_count - 1)))
+  end
+
+  defp validate_presence(%{}), do: nil
+  defp validate_presence(p) when is_function(p, 1), do: nil
+  defp validate_presence(nil), do: nil
+
+  defp validate_presence(other) do
     raise """
     :presence is not of the correct type.
 

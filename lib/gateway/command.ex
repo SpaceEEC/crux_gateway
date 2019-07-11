@@ -60,19 +60,7 @@ defmodule Crux.Gateway.Command do
   def identify(%{shard_id: shard_id, shard_count: shard_count, token: token} = args) do
     presence =
       args
-      |> case do
-        %{presence: presence} when is_map(presence) ->
-          presence
-
-        %{presence: presence} when is_function(presence, 1) ->
-          presence.(shard_id)
-
-        _ ->
-          %{
-            "game" => nil,
-            "status" => "online"
-          }
-      end
+      |> get_presence(shard_id)
       |> Map.new(fn {k, v} -> {to_string(k), v} end)
       |> Map.merge(%{"since" => 0, "afk" => false})
 
@@ -96,6 +84,13 @@ defmodule Crux.Gateway.Command do
     }
     |> finalize(2)
   end
+
+  defp get_presence(%{presence: %{} = presence}, _shard_id), do: presence
+
+  defp get_presence(%{presence: presence}, shard_id) when is_function(presence, 1),
+    do: presence.(shard_id)
+
+  defp get_presence(_, _), do: %{"game" => nil, "status" => "online"}
 
   @doc """
   Builds a [Voice State Update](https://discordapp.com/developers/docs/topics/gateway#voice-state-update) command.
@@ -199,7 +194,7 @@ defmodule Crux.Gateway.Command do
   @spec finalize(
           data :: %{String.t() => map() | String.t()},
           op :: integer()
-        ) :: {:binary, binary()}
+        ) :: command()
   defp finalize(data, op) do
     data =
       %{
