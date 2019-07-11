@@ -45,7 +45,7 @@ defmodule Crux.Gateway do
     Notes:
     - `:token` can be retrieved from [here](https://discordapp.com/developers/applications/me).
 
-    - `:url` you can GET it from `/gateway/bot` (or `Crux.Rest.gateway_bot/0`).
+    - `:url` you can GET from `/gateway/bot` (or `c:Crux.Rest.gateway_bot/0`).
 
     - `:shard_count` ^
 
@@ -53,13 +53,16 @@ defmodule Crux.Gateway do
       Examples: `[1..3]` `[1, 2, 3]` `[1..3, 8, 9]`
       If omitted all shards will be run.
 
-    - Optionally `:dispatcher`, which has to be a valid `GenStage.Dispatcher` or a tuple of one and initial state.
-      See `Crux.Gateway.Connection.Producer` for more info.
-
     - Optionally `:presence`, which is used for the initial presence of every session.
       This should be a presence or a function with an arity of one (the shard id) and returning a presence.
       If a function, it will be invoked whenever a shard is about to identify.
       If omitted the presence will default to online and no game.
+
+    - Optionally `:guild_subscriptions`, aids large or generally stateless bots by opting out of several events and less data being sent over the gateway.
+      See [Discord Docs](https://discordapp.com/developers/docs/topics/gateway#guild-subscriptions).
+
+    - Optionally `:dispatcher`, which has to be a valid `GenStage.Dispatcher` or a tuple of one and initial state.
+      See `Crux.Gateway.Connection.Producer` for more info.
   """
   @type options ::
           %{
@@ -67,8 +70,9 @@ defmodule Crux.Gateway do
             required(:url) => String.t(),
             required(:shard_count) => pos_integer(),
             optional(:shards) => [non_neg_integer() | Range.t()],
-            optional(:dispatcher) => GenStage.Dispatcher.t() | {GenStage.Dispatcher.t(), term()},
-            optional(:presence) => presence()
+            optional(:presence) => presence(),
+            optional(:guild_subscriptions) => boolean(),
+            optional(:dispatcher) => GenStage.Dispatcher.t() | {GenStage.Dispatcher.t(), term()}
           }
           | list()
 
@@ -76,7 +80,7 @@ defmodule Crux.Gateway do
   @spec init(term()) :: {:ok, tuple()}
   def init(opts) when is_list(opts), do: opts |> Map.new() |> init()
 
-  def init(opts) do
+  def init(%{} = opts) do
     gateway_opts =
       opts
       |> transform_opts()
@@ -162,6 +166,19 @@ defmodule Crux.Gateway do
 
     if Map.has_key?(opts, :presence) do
       raise_invalid_presence(opts.presence)
+    end
+
+    case opts do
+      %{guild_subscriptions: invalid} when not is_boolean(invalid) ->
+        raise """
+          :guild_subscriptions must be a boolean or omitted.
+
+          Received:
+          #{inspect(invalid)}
+        """
+
+      _ ->
+        nil
     end
 
     opts

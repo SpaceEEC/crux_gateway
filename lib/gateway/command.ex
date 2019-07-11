@@ -52,7 +52,8 @@ defmodule Crux.Gateway.Command do
             :shard_id => non_neg_integer(),
             :shard_count => non_neg_integer(),
             :token => String.t(),
-            optional(:presence) => Crux.Gateway.presence()
+            optional(:presence) => Crux.Gateway.presence(),
+            optional(:guild_subscriptions) => boolean()
           }
         ) :: command()
 
@@ -76,6 +77,7 @@ defmodule Crux.Gateway.Command do
       |> Map.merge(%{"since" => 0, "afk" => false})
 
     {os, name} = :os.type()
+    guild_subscriptions = Map.get(args, :guild_subscriptions, false)
 
     %{
       "token" => token,
@@ -88,6 +90,7 @@ defmodule Crux.Gateway.Command do
       },
       "compress" => true,
       "large_threshold" => 250,
+      "guild_subscriptions" => guild_subscriptions,
       "shard" => [shard_id, shard_count],
       "presence" => presence
     }
