@@ -107,7 +107,7 @@ defmodule Crux.Gateway.Connection do
   end
 
   def handle_connect(_, state) do
-    {:ok, ref} = :timer.send_after(@hello_timeout, :hello_timer)
+    {:ok, ref} = :timer.send_after(@hello_timeout, :hello_timeout)
 
     z = :zlib.open()
     :zlib.inflateInit(z)
