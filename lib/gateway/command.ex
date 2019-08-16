@@ -65,7 +65,7 @@ defmodule Crux.Gateway.Command do
       |> Map.merge(%{"since" => 0, "afk" => false})
 
     {os, name} = :os.type()
-    guild_subscriptions = Map.get(args, :guild_subscriptions, false)
+    guild_subscriptions = Map.get(args, :guild_subscriptions, true)
 
     %{
       "token" => token,
