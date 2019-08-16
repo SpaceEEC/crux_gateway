@@ -45,21 +45,26 @@ defmodule Crux.Gateway do
     Notes:
     - `:token` can be retrieved from [here](https://discordapp.com/developers/applications/me).
 
-    - `:url` you can GET it from `/gateway/bot` (or `Crux.Rest.gateway_bot/0`).
+    - `:url` you can GET from `/gateway/bot` (or `c:Crux.Rest.gateway_bot/0`).
 
-    - `:shard_count` ^
+    - `:shard_count` same as `:url`.
 
     - Optionally `:shards`, which has to be a list of numbers and ranges.
-      Examples: `[1..3]` `[1, 2, 3]` `[1..3, 8, 9]`
-      If omitted all shards will be run.
+      Examples: `[1..3]`, `[1, 2, 3]`, `[1..3, 8, 9]`
+      > Defaults to `0..shard_count-1`.
+
+    - Optionally `:presence`, which is used for the initial presence of every session.
+      This should be a map with a `"game"` and `"status"` key, or a function with an arity of one (the shard id) and returning such a map, or `nil` for the default.
+      If a function, it will be invoked whenever a shard is about to identify.
+      > Defaults to `%{"game" => nil, "status" => "online"}`.
+
+    - Optionally `:guild_subscriptions`, aids large or generally stateless bots by opting out of several events and less data being sent over the gateway.
+      For more information see [Discord Docs](https://discordapp.com/developers/docs/topics/gateway#guild-subscriptions) and the relevant PR on [GitHub](https://github.com/discordapp/discord-api-docs/pull/1016).
+      > Defaults to `true`
 
     - Optionally `:dispatcher`, which has to be a valid `GenStage.Dispatcher` or a tuple of one and initial state.
       See `Crux.Gateway.Connection.Producer` for more info.
-
-    - Optionally `:presence`, which is used for the initial presence of every session.
-      This should be a presence or a function with an arity of one (the shard id) and returning a presence.
-      If a function, it will be invoked whenever a shard is about to identify.
-      If omitted the presence will default to online and no game.
+      > Defaults to `GenStage.BroadcastDispatcher`
   """
   @type options ::
           %{
@@ -67,8 +72,9 @@ defmodule Crux.Gateway do
             required(:url) => String.t(),
             required(:shard_count) => pos_integer(),
             optional(:shards) => [non_neg_integer() | Range.t()],
-            optional(:dispatcher) => GenStage.Dispatcher.t() | {GenStage.Dispatcher.t(), term()},
-            optional(:presence) => presence()
+            optional(:presence) => presence(),
+            optional(:guild_subscriptions) => boolean(),
+            optional(:dispatcher) => GenStage.Dispatcher.t() | {GenStage.Dispatcher.t(), term()}
           }
           | list()
 
@@ -76,7 +82,7 @@ defmodule Crux.Gateway do
   @spec init(term()) :: {:ok, {:supervisor.sup_flags(), [:supervisor.child_spec()]}} | :ignore
   def init(opts) when is_list(opts), do: opts |> Map.new() |> init()
 
-  def init(opts) do
+  def init(%{} = opts) do
     gateway_opts =
       opts
       |> transform_opts()
@@ -125,59 +131,52 @@ defmodule Crux.Gateway do
          } = opts
        )
        when is_number(shard_count) and shard_count > 0 and is_binary(url) and is_binary(token) do
-    opts =
-      case opts do
-        %{shards: shards} ->
-          shards =
-            shards
-            |> Enum.flat_map(&map_shard(&1, shards))
-            |> Enum.uniq()
-            |> Enum.sort()
-
-          if Enum.min(shards) < 0 do
-            raise """
-            :shards are out of range.
-            A negative shard id is not valid
-
-            :shards resolved to:
-            #{inspect(shards)}
-            """
-          end
-
-          if Enum.max(shards) >= shard_count do
-            raise """
-            :shards are out of range.
-            Shard ids must be lower than shard_count (#{shard_count})
-
-            :shards resolved to:
-            #{inspect(shards)}
-            """
-          end
-
-          %{opts | shards: shards}
-
-        _ ->
-          Map.put(opts, :shards, Enum.to_list(0..(shard_count - 1)))
-      end
+    opts = transform_shards(opts, shard_count)
 
     if Map.has_key?(opts, :presence) do
-      raise_invalid_presence(opts.presence)
+      :ok = validate_presence(opts.presence)
+    end
+
+    if Map.has_key?(opts, :guild_subscriptions) do
+      :ok = validate_guild_subscriptions(opts.guild_subscriptions)
     end
 
     opts
   end
 
-  defp raise_invalid_presence(%{}), do: nil
-  defp raise_invalid_presence(p) when is_function(p, 1), do: nil
-  defp raise_invalid_presence(nil), do: nil
+  defp transform_shards(%{shards: shards} = opts, shard_count) do
+    shards =
+      shards
+      |> Enum.flat_map(&map_shard(&1, shards))
+      |> Enum.uniq()
+      |> Enum.sort()
 
-  defp raise_invalid_presence(other) do
-    raise """
-    :presence is not of the correct type.
+    if Enum.min(shards) < 0 do
+      raise """
+      :shards are out of range.
+      A negative shard id is not valid
 
-    Received:
-    #{inspect(other)}
-    """
+      :shards resolved to:
+      #{inspect(shards)}
+      """
+    end
+
+    if Enum.max(shards) >= shard_count do
+      raise """
+      :shards are out of range.
+      Shard ids must be lower than shard_count (#{shard_count})
+
+      :shards resolved to:
+      #{inspect(shards)}
+      """
+    end
+
+    %{opts | shards: shards}
+  end
+
+  # No :shards to spawn provided, default to all shards
+  defp transform_shards(opts, shard_count) do
+    Map.put(opts, :shards, Enum.to_list(0..(shard_count - 1)))
   end
 
   defp map_shard(num, _shards) when is_number(num), do: [num]
@@ -191,6 +190,30 @@ defmodule Crux.Gateway do
     #{inspect(shards)}
 
     Faulty element:
+    #{inspect(other)}
+    """
+  end
+
+  defp validate_guild_subscriptions(valid) when is_boolean(valid), do: :ok
+
+  defp validate_guild_subscriptions(invalid) do
+    raise """
+      :guild_subscriptions must be a boolean if present.
+
+      Received:
+      #{inspect(invalid)}
+    """
+  end
+
+  defp validate_presence(%{}), do: :ok
+  defp validate_presence(p) when is_function(p, 1), do: :ok
+  defp validate_presence(nil), do: :ok
+
+  defp validate_presence(other) do
+    raise """
+    :presence is not of the correct type.
+
+    Received:
     #{inspect(other)}
     """
   end

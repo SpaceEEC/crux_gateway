@@ -52,30 +52,20 @@ defmodule Crux.Gateway.Command do
             :shard_id => non_neg_integer(),
             :shard_count => pos_integer(),
             :token => String.t(),
-            optional(:presence) => Crux.Gateway.presence()
+            optional(:presence) => Crux.Gateway.presence(),
+            optional(:guild_subscriptions) => boolean()
           }
         ) :: command()
 
   def identify(%{shard_id: shard_id, shard_count: shard_count, token: token} = args) do
     presence =
       args
-      |> case do
-        %{presence: presence} when is_map(presence) ->
-          presence
-
-        %{presence: presence} when is_function(presence, 1) ->
-          presence.(shard_id)
-
-        _ ->
-          %{
-            "game" => nil,
-            "status" => "online"
-          }
-      end
+      |> get_presence(shard_id)
       |> Map.new(fn {k, v} -> {to_string(k), v} end)
       |> Map.merge(%{"since" => 0, "afk" => false})
 
     {os, name} = :os.type()
+    guild_subscriptions = Map.get(args, :guild_subscriptions, true)
 
     %{
       "token" => token,
@@ -88,11 +78,19 @@ defmodule Crux.Gateway.Command do
       },
       "compress" => true,
       "large_threshold" => 250,
+      "guild_subscriptions" => guild_subscriptions,
       "shard" => [shard_id, shard_count],
       "presence" => presence
     }
     |> finalize(2)
   end
+
+  defp get_presence(%{presence: %{} = presence}, _shard_id), do: presence
+
+  defp get_presence(%{presence: presence}, shard_id) when is_function(presence, 1),
+    do: presence.(shard_id)
+
+  defp get_presence(_, _), do: %{"game" => nil, "status" => "online"}
 
   @doc """
   Builds a [Voice State Update](https://discordapp.com/developers/docs/topics/gateway#voice-state-update) command.
