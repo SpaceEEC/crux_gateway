@@ -47,22 +47,24 @@ defmodule Crux.Gateway do
 
     - `:url` you can GET from `/gateway/bot` (or `c:Crux.Rest.gateway_bot/0`).
 
-    - `:shard_count` ^
+    - `:shard_count` same as `:url`.
 
     - Optionally `:shards`, which has to be a list of numbers and ranges.
-      Examples: `[1..3]` `[1, 2, 3]` `[1..3, 8, 9]`
-      If omitted all shards will be run.
+      Examples: `[1..3]`, `[1, 2, 3]`, `[1..3, 8, 9]`
+      > Defaults to `0..shard_count-1`.
 
     - Optionally `:presence`, which is used for the initial presence of every session.
-      This should be a presence or a function with an arity of one (the shard id) and returning a presence.
+      This should be a map with a `"game"` and `"status"` key, or a function with an arity of one (the shard id) and returning such a map, or `nil` for the default.
       If a function, it will be invoked whenever a shard is about to identify.
-      If omitted the presence will default to online and no game.
+      > Defaults to `%{"game" => nil, "status" => "online"}`.
 
     - Optionally `:guild_subscriptions`, aids large or generally stateless bots by opting out of several events and less data being sent over the gateway.
-      See [Discord Docs](https://discordapp.com/developers/docs/topics/gateway#guild-subscriptions).
+      For more information see [Discord Docs](https://discordapp.com/developers/docs/topics/gateway#guild-subscriptions) and the relevant PR on [GitHub](https://github.com/discordapp/discord-api-docs/pull/1016).
+      > Defaults to `true`
 
     - Optionally `:dispatcher`, which has to be a valid `GenStage.Dispatcher` or a tuple of one and initial state.
       See `Crux.Gateway.Connection.Producer` for more info.
+      > Defaults to `GenStage.BroadcastDispatcher`
   """
   @type options ::
           %{
@@ -138,7 +140,7 @@ defmodule Crux.Gateway do
     case opts do
       %{guild_subscriptions: invalid} when not is_boolean(invalid) ->
         raise """
-          :guild_subscriptions must be a boolean if presenc.
+          :guild_subscriptions must be a boolean if present.
 
           Received:
           #{inspect(invalid)}
