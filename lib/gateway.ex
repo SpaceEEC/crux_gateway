@@ -134,20 +134,11 @@ defmodule Crux.Gateway do
     opts = transform_shards(opts, shard_count)
 
     if Map.has_key?(opts, :presence) do
-      validate_presence(opts.presence)
+      :ok = validate_presence(opts.presence)
     end
 
-    case opts do
-      %{guild_subscriptions: invalid} when not is_boolean(invalid) ->
-        raise """
-          :guild_subscriptions must be a boolean if present.
-
-          Received:
-          #{inspect(invalid)}
-        """
-
-      _ ->
-        nil
+    if Map.has_key?(opts, :guild_subscriptions) do
+      :ok = validate_guild_subscriptions(opts.guild_subscriptions)
     end
 
     opts
@@ -183,21 +174,9 @@ defmodule Crux.Gateway do
     %{opts | shards: shards}
   end
 
+  # No :shards to spawn provided, default to all shards
   defp transform_shards(opts, shard_count) do
     Map.put(opts, :shards, Enum.to_list(0..(shard_count - 1)))
-  end
-
-  defp validate_presence(%{}), do: nil
-  defp validate_presence(p) when is_function(p, 1), do: nil
-  defp validate_presence(nil), do: nil
-
-  defp validate_presence(other) do
-    raise """
-    :presence is not of the correct type.
-
-    Received:
-    #{inspect(other)}
-    """
   end
 
   defp map_shard(num, _shards) when is_number(num), do: [num]
@@ -211,6 +190,30 @@ defmodule Crux.Gateway do
     #{inspect(shards)}
 
     Faulty element:
+    #{inspect(other)}
+    """
+  end
+
+  defp validate_guild_subscriptions(valid) when is_boolean(valid), do: :ok
+
+  defp validate_guild_subscriptions(invalid) do
+    raise """
+      :guild_subscriptions must be a boolean if present.
+
+      Received:
+      #{inspect(invalid)}
+    """
+  end
+
+  defp validate_presence(%{}), do: :ok
+  defp validate_presence(p) when is_function(p, 1), do: :ok
+  defp validate_presence(nil), do: :ok
+
+  defp validate_presence(other) do
+    raise """
+    :presence is not of the correct type.
+
+    Received:
     #{inspect(other)}
     """
   end
