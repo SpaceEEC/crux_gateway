@@ -39,10 +39,12 @@ defmodule Crux.Gateway.Connection do
 
   @doc false
   @spec start_link(args :: map()) :: {:ok, pid} | {:error, term}
-  def start_link(%{url: url, shard_id: shard_id} = args) do
+  def start_link(%{url: url, shard_id: shard_id, shard_count: shard_count} = args) do
     url = "#{url}/?encoding=etf&v=6&compress=zlib-stream"
 
-    Logger.info(fn -> "[Crux][Gateway][Shard #{shard_id}}: Booting, connecting to #{url}" end)
+    Logger.metadata(shard_id: shard_id, shard_count: shard_count)
+
+    Logger.info(fn -> "Booting, connecting to #{url}" end)
 
     WebSockex.start_link(url, __MODULE__, [args])
   end
@@ -84,14 +86,14 @@ defmodule Crux.Gateway.Connection do
 
   @doc false
   @spec handle_connect(term(), term()) :: {:ok, state()}
-  def handle_connect(con, [%{shard_id: shard_id} = args]) do
-    Logger.info(fn -> "[Crux][Gateway][Shard #{shard_id}]: Connected" end)
+  def handle_connect(con, [args]) do
+    Logger.info(fn -> "Connected" end)
 
     handle_connect(con, args)
   end
 
-  def handle_connect(con, %{shard_id: shard_id, zlib: {_, z}} = state) do
-    Logger.info(fn -> "[Crux][Gateway][Shard #{shard_id}]: Reconnected" end)
+  def handle_connect(con, %{zlib: {_, z}} = state) do
+    Logger.info(fn -> "Reconnected" end)
 
     try do
       :zlib.inflateEnd(z)
@@ -151,9 +153,9 @@ defmodule Crux.Gateway.Connection do
     handle_disconnect(reason, state)
   end
 
-  def handle_disconnect(%{reason: {:remote, code, reason}}, %{shard_id: shard_id} = state) do
+  def handle_disconnect(%{reason: {:remote, code, reason}}, state) do
     Logger.warn(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{code} - \"#{reason}\""
+      "Disconnected: #{code} - \"#{reason}\""
     end)
 
     seq = Map.get(state, :seq, 0)
@@ -164,14 +166,14 @@ defmodule Crux.Gateway.Connection do
 
   def handle_disconnect(
         %{reason: {:local, 4000, message}},
-        %{shard_id: shard_id} = state
+        state
       )
       when message in [
              @heartbeat_timeout_message,
              @hello_timeout_message
            ] do
     Logger.warn(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{message}. Waiting five seconds before reconnecting"
+      "Disconnected: #{message}. Waiting five seconds before reconnecting"
     end)
 
     seq = Map.get(state, :seq, 0)
@@ -182,11 +184,11 @@ defmodule Crux.Gateway.Connection do
     {:reconnect, state}
   end
 
-  def handle_disconnect(reason, %{shard_id: shard_id} = state) do
+  def handle_disconnect(reason, state) do
     reason = Map.get(reason, :reason, reason)
 
     Logger.warn(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Disconnected: #{inspect(reason)}. Waiting five seconds before reconnecting"
+      "Disconnected: #{inspect(reason)}. Waiting five seconds before reconnecting"
     end)
 
     state = Map.put(state, :close_seq, Map.get(state, :seq, 0))
@@ -204,9 +206,9 @@ defmodule Crux.Gateway.Connection do
   def handle_info(:stop, state), do: {:close, {1000, "Closing connection"}, state}
   def handle_info({:send, frame}, state), do: {:reply, frame, state}
 
-  def handle_info(:heartbeat, %{sup: sup, shard_id: shard_id} = state) do
+  def handle_info(:heartbeat, %{sup: sup} = state) do
     Logger.debug(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Sending heartbeat at seq #{Map.get(state, :seq, "nil")}"
+      "Sending heartbeat at seq #{Map.get(state, :seq, "nil")}"
     end)
 
     command =
@@ -229,9 +231,9 @@ defmodule Crux.Gateway.Connection do
     {:close, {4000, @hello_timeout_message}, state}
   end
 
-  def handle_info(other, %{shard_id: shard_id} = state) do
+  def handle_info(other, state) do
     Logger.warn(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Received unexpected message: #{inspect(other)}"
+      "Received unexpected message: #{inspect(other)}"
     end)
 
     {:ok, state}
@@ -239,9 +241,9 @@ defmodule Crux.Gateway.Connection do
 
   @doc false
   @spec terminate(term(), term()) :: nil
-  def terminate(reason, %{shard_id: shard_id}) do
+  def terminate(reason, _state) do
     Logger.warn(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Terminating due to #{inspect(reason)}"
+      "Terminating due to #{inspect(reason)}"
     end)
 
     nil
@@ -304,7 +306,7 @@ defmodule Crux.Gateway.Connection do
          } = packet
        ) do
     Logger.info(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Ready"
+      "Ready"
     end)
 
     Producer.dispatch(sup, packet, shard_id)
@@ -318,7 +320,7 @@ defmodule Crux.Gateway.Connection do
     {close_seq, state} = Map.pop(state, :close_seq, 0)
 
     Logger.info(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Resumed #{close_seq} -> #{Map.get(state, :seq)}"
+      "Resumed #{close_seq} -> #{Map.get(state, :seq)}"
     end)
 
     Producer.dispatch(sup, packet, shard_id)
@@ -349,7 +351,7 @@ defmodule Crux.Gateway.Connection do
 
   # 9 - Invalid Session - Resume
   defp handle_packet(
-         %{sup: sup, shard_id: shard_id, seq: seq, session: session, token: token} = state,
+         %{sup: sup, seq: seq, session: session, token: token} = state,
          %{
            op: 9,
            d: true
@@ -357,7 +359,7 @@ defmodule Crux.Gateway.Connection do
        )
        when is_binary(token) and is_binary(session) and is_integer(seq) and seq > 0 do
     Logger.warn(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Invalid session, will try to resume"
+      "Invalid session, will try to resume"
     end)
 
     :timer.sleep(@resume_timeout)
@@ -370,9 +372,9 @@ defmodule Crux.Gateway.Connection do
   end
 
   # 9 - Invalid Session - New
-  defp handle_packet(%{gateway: gateway, sup: sup, shard_id: shard_id} = state, %{op: 9}) do
+  defp handle_packet(%{gateway: gateway, sup: sup} = state, %{op: 9}) do
     Logger.warn(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Invalid session, will identify as a new one"
+      "Invalid session, will identify as a new one"
     end)
 
     state =
@@ -439,8 +441,8 @@ defmodule Crux.Gateway.Connection do
   end
 
   # 11 - Heartbeat ack
-  defp handle_packet(%{shard_id: shard_id} = state, %{op: 11}) do
-    Logger.debug("[Crux][Gateway][Shard #{shard_id}]: Received heartbeat ack")
+  defp handle_packet(state, %{op: 11}) do
+    Logger.debug(fn -> "Received heartbeat ack" end)
 
     case state do
       %{heartbeat_timeout: ref} ->
@@ -455,9 +457,9 @@ defmodule Crux.Gateway.Connection do
     end
   end
 
-  defp handle_packet(%{shard_id: shard_id} = state, packet) do
+  defp handle_packet(state, packet) do
     Logger.warn(fn ->
-      "[Crux][Gateway][Shard #{shard_id}]: Unhandled packet type" <>
+      "Unhandled packet type" <>
         "#{packet.t || packet.d}: #{inspect(packet)}"
     end)
 

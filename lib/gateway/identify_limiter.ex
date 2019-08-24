@@ -33,7 +33,7 @@ defmodule Crux.Gateway.IdentifyLimiter do
   @doc false
   @spec init(term()) :: {:ok, term()}
   def init(_args) do
-    Logger.debug("[Crux][Gateway][IdentifyLimiter]: Starting")
+    Logger.debug(fn -> "Starting" end)
 
     # ratelimit reset
     state = 0
@@ -50,7 +50,7 @@ defmodule Crux.Gateway.IdentifyLimiter do
       :timer.sleep(ratelimit_reset - now)
     end
 
-    Logger.debug("[Crux][Gateway][IdentifyLimiter]: Sending identify")
+    Logger.debug(fn -> "Sending identify" end)
 
     {:reply, :ok, :os.system_time(:millisecond) + @timeout}
   end
