@@ -39,10 +39,10 @@ defmodule Crux.Gateway.MixProject do
 
   defp deps do
     [
-      {:gen_stage, "~> 0.13.1"},
-      {:websockex, "~> 0.4.1"},
-      {:poison, "~> 3.1.0"},
-      {:credo, "~> 1.0.0", only: [:dev, :test], runtime: false},
+      {:gen_stage, "~> 0.14"},
+      {:websockex, "~> 0.4"},
+      {:jason, "~> 1.1", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.1", only: [:dev, :test], runtime: false},
       {:ex_doc,
        git: "https://github.com/spaceeec/ex_doc",
        branch: "feat/umbrella",
@@ -65,7 +65,7 @@ defmodule Crux.Gateway.MixProject do
       |> Enum.slice(0..-2)
       |> Enum.map(&%{"url" => "https://hexdocs.pm/#{@name}/" <> &1, "version" => &1})
       |> Enum.reverse()
-      |> Poison.encode!()
+      |> Jason.encode!()
 
     config = "var versionNodes = " <> config
 
