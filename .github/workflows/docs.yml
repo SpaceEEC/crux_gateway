@@ -1,0 +1,24 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  dispatch:
+    name: Trigger repository dispatch
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Trigger repository dispatch
+      env:
+        GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+      run: |
+        curl -X POST \
+          https://api.github.com/repos/spaceeec/crux/dispatches \
+          -H 'Accept: application/vnd.github.everest-preview+json' \
+          -H "Authorization: token ${GITHUB_PAT}" \
+          -H 'Content-Type: application/json' \
+          -d '{ "event_type": "docs" }'
