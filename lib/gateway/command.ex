@@ -98,8 +98,8 @@ defmodule Crux.Gateway.Command do
   Used to join, switch between, and leave voice channels and/or change self_mute or self_deaf states.
   """
   @spec voice_state_update(
-          guild_id :: pos_integer(),
-          channel_id :: pos_integer() | nil,
+          guild_id :: Crux.Structs.Snowflake.t(),
+          channel_id :: Crux.Structs.Snowflake.t() | nil,
           states :: [{:self_mute, boolean()} | {:self_deaf, boolean()}]
         ) :: command()
   def voice_state_update(guild_id, channel_id \\ nil, states \\ []) do
@@ -158,17 +158,37 @@ defmodule Crux.Gateway.Command do
   The gateway will respond with `:GUILD_MEMBER_CHUNK` packets until all appropriate members are received.
   """
   @spec request_guild_members(
-          guild_id :: pos_integer(),
-          opts :: [{:query, String.t()} | {:limit, pos_integer()}]
+          guild_id :: Crux.Structs.Snowflake.t(),
+          opts ::
+            [
+              {:query, String.t()}
+              | {:limit, pos_integer()}
+              | {:presences, boolean()}
+              | {:user_ids, Crux.Structs.Snowflake.t() | [Crux.Structs.Snowflake.t()]}
+            ]
+            | map()
         ) :: command()
-  def request_guild_members(guild_id, opts \\ []) do
+  def request_guild_members(guild_id, opts \\ [])
+
+  def request_guild_members(guild_id, %{} = opts) do
+    other_opts =
+      case opts do
+        %{query: query, user_ids: user_ids} -> %{"query" => query, "user_ids" => user_ids}
+        %{query: query} -> %{"query" => query}
+        %{user_ids: user_ids} -> %{"user_ids" => user_ids}
+        %{} -> %{"query" => ""}
+      end
+
     %{
       "guild_id" => guild_id,
-      "query" => opts[:query] || "",
-      "limit" => opts[:limit] || 0
+      "limit" => Map.get(opts, :limit, 0),
+      "presences" => Map.get(opts, :presences, false)
     }
+    |> Map.merge(other_opts)
     |> finalize(8)
   end
+
+  def request_guild_members(guild_id, opts), do: request_guild_members(guild_id, Map.new(opts))
 
   @doc """
   Builds a [Resume](https://discordapp.com/developers/docs/topics/gateway#resume) command.
