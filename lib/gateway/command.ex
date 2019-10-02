@@ -162,7 +162,7 @@ defmodule Crux.Gateway.Command do
           opts ::
             [
               {:query, String.t()}
-              | {:limit, pos_integer()}
+              | {:limit, non_neg_integer()}
               | {:presences, boolean()}
               | {:user_ids, Crux.Structs.Snowflake.t() | [Crux.Structs.Snowflake.t()]}
             ]
