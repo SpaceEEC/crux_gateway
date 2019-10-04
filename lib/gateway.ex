@@ -46,6 +46,7 @@ defmodule Crux.Gateway do
     - `:token` can be retrieved from [here](https://discordapp.com/developers/applications/me).
 
     - `:url` you can GET from `/gateway/bot` (or `c:Crux.Rest.gateway_bot/0`).
+      > This can also be a function with an arity of 0 returning it.
 
     - `:shard_count` same as `:url`.
 
@@ -69,7 +70,7 @@ defmodule Crux.Gateway do
   @type options ::
           %{
             required(:token) => String.t(),
-            required(:url) => String.t(),
+            required(:url) => String.t() | (() -> String.t()),
             required(:shard_count) => pos_integer(),
             optional(:shards) => [non_neg_integer() | Range.t()],
             optional(:presence) => presence(),
@@ -81,6 +82,8 @@ defmodule Crux.Gateway do
   @doc false
   @spec init(term()) :: {:ok, {:supervisor.sup_flags(), [:supervisor.child_spec()]}} | :ignore
   def init(opts) when is_list(opts), do: opts |> Map.new() |> init()
+
+  def init(%{url: fun} = opts) when is_function(fun, 0), do: init(%{opts | url: fun.()})
 
   def init(%{} = opts) do
     gateway_opts =
