@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.23.0">
+    <meta name="project" content="crux_gateway v0.3.0-dev">
+
+    <title>Crux.Gateway — crux_gateway v0.3.0-dev</title>
+    <link rel="stylesheet" href="dist/elixir-9f91ebe876dc01d67920.css" />
+
+    <script src="dist/sidebar_items-6c256c3843.js"></script>
+
+      <script src="docs_config.js"></script>
+
+    <script async src="dist/app-60a0c9f10e9e52eae31f.js"></script>
+
+  </head>
+  <body data-type="modules">
+    <script>try { if(localStorage.getItem('night-mode') === 'true') document.body.className += ' night-mode'; } catch (e) { }</script>
+
+<div class="main">
+
+<button class="sidebar-button sidebar-toggle">
+  <span class="icon-menu" title="Collapse/expand sidebar"></span>
+</button>
+
+<section class="sidebar">
+  <form class="sidebar-search" action="search.html">
+    <button type="submit" class="search-button" aria-label="Submit Search">
+      <span class="icon-search" aria-hidden="true" title="Submit search"></span>
+    </button>
+    <button type="button" tabindex="-1" class="search-close-button" aria-label="Cancel Search">
+      <span class="icon-cross" aria-hidden="true" title="Cancel search"></span>
+    </button>
+    <label class="search-label">
+      <input name="q" type="text" id="search-list" class="search-input" placeholder="Search..." aria-label="Input your search terms" autocomplete="off" />
+    </label>
+  </form>
+
+  <div class="autocomplete">
+    <div class="autocomplete-results">
+    </div>
+  </div>
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectDetails">
+      <a href="https://github.com/SpaceEEC/crux_gateway/" class="sidebar-projectName">
+crux_gateway
+      </a>
+      <strong class="sidebar-projectVersion">
+        v0.3.0-dev
+      </strong>
+    </div>
+
+  </div>
+
+  <ul class="sidebar-listNav">
+    <li><a id="extras-list" href="#full-list">Pages</a></li>
+
+      <li><a id="modules-list" href="#full-list">Modules</a></li>
+
+
+  </ul>
+  <div class="gradient"></div>
+  <ul id="full-list" class="sidebar-fullList"></ul>
+</section>
+
+<section class="content">
+  <div class="content-outer">
+    <div id="content" class="content-inner">
+
+      <h1>
+Crux.Gateway <small class="app-vsn">(crux_gateway v0.3.0-dev)</small>
+
+          <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L1" title="View Source" class="view-source" rel="help">
+            <span class="icon-code" aria-hidden="true"></span>
+            <span class="sr-only">View Source</span>
+          </a>
+
+      </h1>
+
+
+        <section id="moduledoc">
+<p>Main entry point for <a href="#content"><code class="inline">Crux.Gateway</code></a>.</p><p>This modules fits under a supervision tree, see <a href="#start_link/1"><code class="inline">start_link/1</code></a> for configuration options.</p>
+        </section>
+
+
+        <section id="summary" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#summary">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+            Summary
+          </h1>
+
+  <div class="summary-types summary">
+    <h2>
+      <a href="#types">Types</a>
+    </h2>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:event/0">event()</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Type for events published by <a href="#content"><code class="inline">Crux.Gateway</code></a>'s shard gen stage stages.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:gateway/0">gateway()</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>The given name for a <a href="#content"><code class="inline">Crux.Gateway</code></a> process.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:opts/0">opts()</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Required to start <a href="#content"><code class="inline">Crux.Gateway</code></a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:opts_map/0">opts_map()</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>See <a href="#t:opts/0"><code class="inline">opts/0</code></a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:presence/0">presence()</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Used as initial presence for every session.
+Can be either a map representing the presence to use or a function taking the shard id and the shard count and returning a presence map to use.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:presence_map/0">presence_map()</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>See <a href="#t:presence/0"><code class="inline">presence/0</code></a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:shard_count/0">shard_count()</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>The shard count of a shard, shards are identified by a tuple of shard id and shard count.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:shard_id/0">shard_id()</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>The id of a shard, shards are identified by a tuple of shard id and shard count.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:shard_opts/0">shard_opts()</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Used to start a shard.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:shard_tuple/0">shard_tuple()</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>A tuple of shard id and shard count used to identify a shard.</p></div>
+
+</div>
+
+  </div>
+
+  <div class="summary-functions summary">
+    <h2>
+      <a href="#functions">Functions</a>
+    </h2>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#child_spec/1">child_spec(init_arg)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Returns a specification to start this module under a supervisor.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#producers/1">producers(name)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>A map of all running producers.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#send_command/3">send_command(gateway, shard_tuple, packet)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Send a command to Discord through the specified shard.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#shards/1">shards(name)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>A map of all running shard supervisors.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#start_link/1">start_link(opts)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Start this module linked to the current process, intended to be used in combination with a Supervisor.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#start_shard/2">start_shard(name, shard)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Start a shard.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#stop_shard/2">stop_shard(name, shard)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Stop a shard.</p></div>
+
+</div>
+
+  </div>
+
+        </section>
+
+
+        <section id="types" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#types">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+Types
+          </h1>
+          <div class="types-list">
+<section class="detail" id="t:event/0">
+
+  <div class="detail-header">
+    <a href="#t:event/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">event()</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L148" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>event() :: {type :: <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">atom</a>(), data :: <a href="https://hexdocs.pm/elixir/typespecs.html#built-in-types">term</a>(), <a href="#t:shard_tuple/0">shard_tuple</a>()}</pre>
+
+      </div>
+
+<p>Type for events published by <a href="#content"><code class="inline">Crux.Gateway</code></a>'s shard gen stage stages.</p><p>For example: <code class="inline">{:MESSAGE_CREATE, %{...}, {0, 1}}</code></p>
+  </section>
+</section>
+<section class="detail" id="t:gateway/0">
+
+  <div class="detail-header">
+    <a href="#t:gateway/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">gateway()</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L43" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.2.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>gateway() :: <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">atom</a>()</pre>
+
+      </div>
+
+<p>The given name for a <a href="#content"><code class="inline">Crux.Gateway</code></a> process.</p>
+  </section>
+</section>
+<section class="detail" id="t:opts/0">
+
+  <div class="detail-header">
+    <a href="#t:opts/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">opts()</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L77" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>opts() :: <a href="#t:opts_map/0">opts_map</a>() | (() -&gt; <a href="#t:opts_map/0">opts_map</a>())</pre>
+
+      </div>
+
+<p>Required to start <a href="#content"><code class="inline">Crux.Gateway</code></a>.</p><p>These can optionally be a function for lazy loading, said function is applied exactly once with no arguments when the process is started.</p><p>Notes</p><ul><li><code class="inline">:dispatcher</code> - An atom representing a dispatcher module or a tuple of one and inital options.</li><li><ul><li>Defaults to <a href="https://hexdocs.pm/gen_stage/1.0.0/GenStage.DemandDispatcher.html"><code class="inline">GenStage.DemandDispatcher</code></a>.</li></ul></li><li><code class="inline">:max_concurrency</code> - Obtained from <code class="inline">/gateway/bot</code> (See also <code class="inline">c:Crux.Rest.get_gateway_bot/0</code>)</li><li><ul><li>Defaults to <code class="inline">1</code></li></ul></li><li><code class="inline">:presence</code> - Used as initial presence for every session. (See also <a href="#t:presence/0"><code class="inline">presence/0</code></a>)</li><li><ul><li>Defaults to none (the bot will be online with no activity)</li></ul></li><li><code class="inline">:intents</code> - The types of events you would like to receive from Discord. (See also <code class="inline">Crux.Structs.Intents</code>)</li><li><ul><li>If none are provided here, you must provide them when starting a shard.</li></ul></li><li><code class="inline">:name</code> - Which name to use for this <a href="#content"><code class="inline">Crux.Gateway</code></a></li><li><code class="inline">:token</code> - The bot token to use, you can get the one of your bot from <a href="https://discord.com/developers/applications">here</a>.</li><li><code class="inline">:url</code> - Obtained from <code class="inline">/gateway/bot</code> (See also <code class="inline">c:Crux.Rest.get_gateway_bot/0</code>)</li></ul>
+  </section>
+</section>
+<section class="detail" id="t:opts_map/0">
+
+  <div class="detail-header">
+    <a href="#t:opts_map/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">opts_map()</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L81" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>opts_map() ::
+  %{
+    optional(:dispatcher) =&gt;
+      <a href="https://hexdocs.pm/elixir/typespecs.html#built-in-types">module</a>() | {<a href="https://hexdocs.pm/elixir/typespecs.html#built-in-types">module</a>(), <a href="https://hexdocs.pm/gen_stage/1.0.0/GenStage.Dispatcher.html#t:options/0">GenStage.Dispatcher.options</a>()},
+    optional(:max_concurrency) =&gt; <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">pos_integer</a>(),
+    optional(:presence) =&gt; <a href="#t:presence/0">presence</a>(),
+    optional(:intents) =&gt; <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">non_neg_integer</a>(),
+    :name =&gt; <a href="#t:gateway/0">gateway</a>(),
+    :token =&gt; <a href="https://hexdocs.pm/elixir/String.html#t:t/0">String.t</a>(),
+    :url =&gt; <a href="https://hexdocs.pm/elixir/String.html#t:t/0">String.t</a>()
+  }
+  | <a href="https://hexdocs.pm/elixir/typespecs.html#built-in-types">keyword</a>()</pre>
+
+      </div>
+
+<p>See <a href="#t:opts/0"><code class="inline">opts/0</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="t:presence/0">
+
+  <div class="detail-header">
+    <a href="#t:presence/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">presence()</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L49" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.2.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>presence() :: <a href="#t:presence_map/0">presence_map</a>() | (<a href="#t:shard_id/0">shard_id</a>(), <a href="#t:shard_count/0">shard_count</a>() -&gt; <a href="#t:presence_map/0">presence_map</a>())</pre>
+
+      </div>
+
+<p>Used as initial presence for every session.
+Can be either a map representing the presence to use or a function taking the shard id and the shard count and returning a presence map to use.</p>
+  </section>
+</section>
+<section class="detail" id="t:presence_map/0">
+
+  <div class="detail-header">
+    <a href="#t:presence_map/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">presence_map()</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L53" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>presence_map() :: %{
+  optional(:status) =&gt; <a href="https://hexdocs.pm/elixir/String.html#t:t/0">String.t</a>(),
+  optional(:activites) =&gt; [<a href="Crux.Gateway.Command.html#t:activity/0">Crux.Gateway.Command.activity</a>()]
+}</pre>
+
+      </div>
+
+<p>See <a href="#t:presence/0"><code class="inline">presence/0</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="t:shard_count/0">
+
+  <div class="detail-header">
+    <a href="#t:shard_count/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">shard_count()</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L31" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>shard_count() :: <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">pos_integer</a>()</pre>
+
+      </div>
+
+<p>The shard count of a shard, shards are identified by a tuple of shard id and shard count.</p>
+  </section>
+</section>
+<section class="detail" id="t:shard_id/0">
+
+  <div class="detail-header">
+    <a href="#t:shard_id/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">shard_id()</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L25" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>shard_id() :: <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+
+      </div>
+
+<p>The id of a shard, shards are identified by a tuple of shard id and shard count.</p>
+  </section>
+</section>
+<section class="detail" id="t:shard_opts/0">
+
+  <div class="detail-header">
+    <a href="#t:shard_opts/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">shard_opts()</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L108" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>shard_opts() :: %{
+  optional(:intents) =&gt; <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">non_neg_integer</a>(),
+  optional(:presence) =&gt; <a href="#t:presence/0">presence</a>(),
+  optional(:session_id) =&gt; <a href="https://hexdocs.pm/elixir/String.html#t:t/0">String.t</a>(),
+  optional(:seq) =&gt; <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">pos_integer</a>(),
+  :shard_id =&gt; <a href="#t:shard_id/0">shard_id</a>(),
+  :shard_count =&gt; <a href="#t:shard_count/0">shard_count</a>()
+}</pre>
+
+      </div>
+
+<p>Used to start a shard.</p><p>Notes:</p><ul><li><code class="inline">:intents</code> - What events you would like to receive from Discord. (See also <code class="inline">Crux.Structs.Intents</code>)</li><li><ul><li>Optional if provided when starting <a href="#content"><code class="inline">Crux.Gateway</code></a>, otherwise required.</li></ul></li><li><ul><li>If present these will override those provided when starting <a href="#content"><code class="inline">Crux.Gateway</code></a>.</li></ul></li><li><code class="inline">:presence</code> - Used as initial presence for every session. (See also <a href="#t:presence/0"><code class="inline">presence/0</code></a>)</li><li><ul><li>If present this will override the presenve provided when starting <a href="#content"><code class="inline">Crux.Gateway</code></a>.</li></ul></li><li><code class="inline">:session_id</code> - If you want to (try to) resume a disconnected session, this also requires <code class="inline">:seq</code> to be set.</li><li><code class="inline">:seq</code> - If you want to (try to) resume a disconnected session, this also requires <code class="inline">:session_id</code> to be set.</li><li><code class="inline">:shard_id</code> - The id of the shard you want to start.</li><li><code class="inline">shard_count</code> - The shard count of the shard you want to start.</li></ul>
+  </section>
+</section>
+<section class="detail" id="t:shard_tuple/0">
+
+  <div class="detail-header">
+    <a href="#t:shard_tuple/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">shard_tuple()</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L37" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>shard_tuple() :: {<a href="#t:shard_id/0">shard_id</a>(), <a href="#t:shard_count/0">shard_count</a>()}</pre>
+
+      </div>
+
+<p>A tuple of shard id and shard count used to identify a shard.</p>
+  </section>
+</section>
+
+          </div>
+        </section>
+
+        <section id="functions" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#functions">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+Functions
+          </h1>
+          <div class="functions-list">
+<section class="detail" id="child_spec/1">
+
+  <div class="detail-header">
+    <a href="#child_spec/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">child_spec(init_arg)</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L9" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>child_spec(<a href="#t:opts/0">opts</a>()) :: <a href="https://hexdocs.pm/elixir/Supervisor.html#t:child_spec/0">Supervisor.child_spec</a>()</pre>
+
+      </div>
+
+<p>Returns a specification to start this module under a supervisor.</p><p>See <a href="https://hexdocs.pm/elixir/Supervisor.html"><code class="inline">Supervisor</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="producers/1">
+
+  <div class="detail-header">
+    <a href="#producers/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">producers(name)</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L157" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>producers(<a href="#t:gateway/0">gateway</a>()) :: %{required(<a href="#t:shard_tuple/0">shard_tuple</a>()) =&gt; <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">pid</a>()}</pre>
+
+      </div>
+
+<p>A map of all running producers.</p><p>See <a href="#t:event/0"><code class="inline">event/0</code></a> for the type of published event.</p>
+  </section>
+</section>
+<section class="detail" id="send_command/3">
+
+  <div class="detail-header">
+    <a href="#send_command/3" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">send_command(gateway, shard_tuple, packet)</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L174" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>send_command(<a href="#t:gateway/0">gateway</a>(), <a href="#t:shard_tuple/0">shard_tuple</a>(), <a href="Crux.Gateway.Command.html#t:command/0">Crux.Gateway.Command.command</a>()) ::
+  :ok | {:error, :not_found | :no_rate_limiter | :not_ready | :too_large}</pre>
+
+      </div>
+
+<p>Send a command to Discord through the specified shard.</p><p>Errors:</p><ul><li><code class="inline">:not_found</code> - The connection process for the given shard tuple wasn't found. (That shard likely wasn't started, or happened to just crash.)</li><li><code class="inline">:no_rate_limiter</code> - The connection was found, but its rate limiter wasn't. (This means it crashed, that shouldn't happen.)</li><li><code class="inline">:not_ready</code> - The connection is currently not ready, try again later.</li><li><code class="inline">:too_large</code> - The given command was too large. (You shouldn't exceed this, the payload likely is invalid anyway.)</li></ul>
+  </section>
+</section>
+<section class="detail" id="shards/1">
+
+  <div class="detail-header">
+    <a href="#shards/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">shards(name)</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L140" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>shards(<a href="#t:gateway/0">gateway</a>()) :: %{required(<a href="#t:shard_tuple/0">shard_tuple</a>()) =&gt; <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">pid</a>()}</pre>
+
+      </div>
+
+<p>A map of all running shard supervisors.</p>
+  </section>
+</section>
+<section class="detail" id="start_link/1">
+
+  <div class="detail-header">
+    <a href="#start_link/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">start_link(opts)</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L184" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>start_link(<a href="#t:opts/0">opts</a>()) :: <a href="https://hexdocs.pm/elixir/Supervisor.html#t:on_start/0">Supervisor.on_start</a>()</pre>
+
+      </div>
+
+<p>Start this module linked to the current process, intended to be used in combination with a Supervisor.</p>
+  </section>
+</section>
+<section class="detail" id="start_shard/2">
+
+  <div class="detail-header">
+    <a href="#start_shard/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">start_shard(name, shard)</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L126" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>start_shard(<a href="#t:gateway/0">gateway</a>(), <a href="#t:shard_tuple/0">shard_tuple</a>() | <a href="#t:shard_opts/0">shard_opts</a>()) ::
+  <a href="https://hexdocs.pm/elixir/Supervisor.html#t:on_start_child/0">Supervisor.on_start_child</a>()</pre>
+
+      </div>
+
+<p>Start a shard.</p>
+  </section>
+</section>
+<section class="detail" id="stop_shard/2">
+
+  <div class="detail-header">
+    <a href="#stop_shard/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">stop_shard(name, shard)</h1>
+
+      <a href="https://github.com/SpaceEEC/crux_gateway/blob/master/lib/gateway.ex#L133" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(since 0.3.0)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>stop_shard(<a href="#t:gateway/0">gateway</a>(), <a href="#t:shard_tuple/0">shard_tuple</a>()) :: :ok | {:error, :not_found}</pre>
+
+      </div>
+
+<p>Stop a shard.</p>
+  </section>
+</section>
+
+          </div>
+        </section>
+
+      <footer class="footer">
+        <p>
+          <span class="line">
+            Built using
+            <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener">ExDoc</a> (v0.23.0) for the
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank">Elixir programming language</a>.
+          </span>
+          <span class="line">
+            Designed by
+            <a href="https://twitter.com/dignifiedquire" target="_blank" rel="noopener" title="@dignifiedquire">Friedel Ziegelmayer</a>.
+          </span>
+        </p>
+        <p>
+
+            <a href="api-reference.html" title="API reference" class="line footer-button">API Reference</a>
+
+          <button class="line footer-button display-shortcuts-help">
+            Display keyboard shortcuts
+          </button>
+          <button class="line footer-button night-mode-toggle">
+            Toggle night mode
+          </button>
+          <button class="line footer-button display-quick-switch">
+            Go to a HexDocs package
+          </button>
+          <button class="line footer-button tooltips-toggle">
+            <span class="tooltips-option-disable">Disable tooltips</span>
+            <span class="tooltips-option-enable">Enable tooltips</span>
+          </button>
+        </p>
+      </footer>
+    </div>
+  </div>
+</section>
+</div>
+
+  </body>
+</html>
