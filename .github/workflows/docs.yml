@@ -3,22 +3,50 @@ name: Documentation
 on:
   push:
     branches:
-      - 'master'
+      - 'rewrite'
 
 jobs:
-  dispatch:
-    name: Trigger repository dispatch
+  docs:
+    name: Build and Deploy Documentation
 
     runs-on: ubuntu-latest
 
+    container:
+      image: spaceeec/elixir:1.10-slim
+
     steps:
-    - name: Trigger repository dispatch
-      env:
-        GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
-      run: |
-        curl -X POST \
-          https://api.github.com/repos/spaceeec/crux/dispatches \
-          -H 'Accept: application/vnd.github.everest-preview+json' \
-          -H "Authorization: token ${GITHUB_PAT}" \
-          -H 'Content-Type: application/json' \
-          -d '{ "event_type": "docs" }'
+      - name: Checkout Code Branch
+        uses: actions/checkout@v2
+        with:
+          path: repo
+
+      - name: Install Dependencies
+        run: |
+           mix local.rebar --force
+           mix local.hex --force
+           mix deps.get
+        working-directory: repo
+
+      - name: Generate Documentation
+        run: mix docs
+        working-directory: repo
+
+      - name: Checkout Documentation Branch
+        uses: actions/checkout@v2
+        with:
+          ref: docs
+          path: docs
+
+      - name: Copy Documentation
+        run: |
+          rm -rf ./docs/docs
+          mv ./repo/doc ./docs/docs
+
+      - name: Commit and Push Documentation
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git add .
+          git commit -m "docs: documentation build for ${GITHUB_SHA}"
+          git push
+        working-directory: docs
