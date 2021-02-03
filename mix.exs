@@ -10,7 +10,7 @@ defmodule Crux.Gateway.MixProject do
       package: package(),
       app: @name,
       version: @vsn,
-      elixir: "~> 1.6",
+      elixir: "~> 1.10",
       description: "Package providing a flexible gateway connection to the Discord API.",
       source_url: "https://github.com/SpaceEEC/#{@name}/",
       homepage_url: "https://github.com/SpaceEEC/#{@name}/",
