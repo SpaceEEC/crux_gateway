@@ -50,13 +50,13 @@ defmodule Crux.Gateway.RateLimiterTest do
     test "enqueueing works, the first request is not limited" do
       {timeout, return} = Timer.tc(fn -> RateLimiter.enqueue_identify(%{name: @name}) end)
       assert return == :ok
-      assert timeout < 50
+      assert timeout < 500
     end
 
     test "multiple requests are being throttled and enqueued" do
       {timeout, return} = Timer.tc(fn -> RateLimiter.enqueue_identify(%{name: @name}) end)
       assert return == :ok
-      assert timeout < 50
+      assert timeout < 500
 
       task1 =
         Task.async(fn ->
@@ -82,23 +82,23 @@ defmodule Crux.Gateway.RateLimiterTest do
     test "max_concurrency works" do
       {timeout, return} = Timer.tc(fn -> RateLimiter.enqueue_identify(%{name: @name}) end)
       assert return == :ok
-      assert timeout < 50
+      assert timeout < 500
 
       {timeout, return} = Timer.tc(fn -> RateLimiter.enqueue_identify(%{name: @name}) end)
       assert return == :ok
-      assert timeout < 50
+      assert timeout < 500
 
       {timeout, return} = Timer.tc(fn -> RateLimiter.enqueue_identify(%{name: @name}) end)
       assert return == :ok
-      assert timeout < 50
+      assert timeout < 500
 
       {timeout, return} = Timer.tc(fn -> RateLimiter.enqueue_identify(%{name: @name}) end)
       assert return == :ok
-      assert timeout < 50
+      assert timeout < 500
 
       {timeout, return} = Timer.tc(fn -> RateLimiter.enqueue_identify(%{name: @name}) end)
       assert return == :ok
-      assert timeout < 50
+      assert timeout < 500
 
       assert :ok ==
                assert_throttled(5000, fn ->
@@ -122,7 +122,7 @@ defmodule Crux.Gateway.RateLimiterTest do
           end)
 
         assert return == :ok
-        assert timeout < 50
+        assert timeout < 500
       end
     end
   end
