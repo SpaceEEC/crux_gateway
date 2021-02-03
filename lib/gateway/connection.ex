@@ -362,7 +362,7 @@ defmodule Crux.Gateway.Connection do
   end
 
   def terminate(:fatal_close_code, _state, data) do
-    Crux.Gateway.stop_shard(data.name, {data.shard_id, data.shard_count})
+    Gateway.stop_shard(data.name, {data.shard_id, data.shard_count})
   end
 
   def terminate(reason, state, data) do

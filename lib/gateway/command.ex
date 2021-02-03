@@ -68,21 +68,9 @@ defmodule Crux.Gateway.Command do
         %{shard_id: shard_id, shard_count: shard_count, token: token, intents: intents} = args
       ) do
     presence =
-      case args do
-        %{presence: fun} when is_function(fun, 2) ->
-          fun.(shard_id, shard_count)
-
-        %{presence: presence} when is_map(presence) ->
-          presence
-
-        %{presence: nil} ->
-          %{}
-
-        args when not is_map_key(args, :presence) ->
-          %{}
-      end
-
-    presence = _update_status(presence)
+      args
+      |> _get_presence()
+      |> _update_status()
 
     {os, name} = OS.type()
 
@@ -100,6 +88,25 @@ defmodule Crux.Gateway.Command do
       "intents" => intents
     }
     |> finalize(2)
+  end
+
+  defp _get_presence(%{presence: fun, shard_id: shard_id, shard_count: shard_count})
+       when is_function(fun, 2) do
+    fun.(shard_id, shard_count)
+  end
+
+  defp _get_presence(%{presence: presence})
+       when is_map(presence) do
+    presence
+  end
+
+  defp _get_presence(%{presence: nil}) do
+    %{}
+  end
+
+  defp _get_presence(args)
+       when not is_map_key(args, :presence) do
+    %{}
   end
 
   @doc """
@@ -151,8 +158,9 @@ defmodule Crux.Gateway.Command do
     presence
     |> Map.new(fn
       {k, v} when is_list(v) ->
-        activites =
-          Enum.map(v, fn activity -> Map.new(activity, fn {k, v} -> {to_string(k), v} end) end)
+        stringify_key = fn {k, v} -> {to_string(k), v} end
+
+        activites = Enum.map(v, &Map.new(&1, stringify_key))
 
         {to_string(k), activites}
 

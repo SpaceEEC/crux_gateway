@@ -262,7 +262,8 @@ defmodule Crux.Gateway.Connection.Gun do
     new_buffer =
       if suffix == <<0x00, 0x00, 0xFF, 0xFF>> do
         packet =
-          Zlib.inflate(data.zlib, buffer)
+          data.zlib
+          |> Zlib.inflate(buffer)
           |> Erlang.iolist_to_binary()
           |> Erlang.binary_to_term()
           |> Util.atomify()
