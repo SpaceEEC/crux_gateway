@@ -1,7 +1,7 @@
 defmodule Crux.Gateway.MixProject do
   use Mix.Project
 
-  @vsn "0.2.3"
+  @vsn "0.3.0-dev"
   @name :crux_gateway
 
   def project do
@@ -15,6 +15,7 @@ defmodule Crux.Gateway.MixProject do
       source_url: "https://github.com/SpaceEEC/#{@name}/",
       homepage_url: "https://github.com/SpaceEEC/#{@name}/",
       deps: deps(),
+      docs: docs(),
       aliases: aliases()
     ]
   end
@@ -27,28 +28,26 @@ defmodule Crux.Gateway.MixProject do
       links: %{
         "GitHub" => "https://github.com/SpaceEEC/#{@name}/",
         "Changelog" => "https://github.com/SpaceEEC/#{@name}/releases/tag/#{@vsn}/",
-        "Documentation" => "https://hexdocs.pm/#{@name}/",
-        "Unified Development Documentation" => "https://crux.randomly.space/"
+        "Documentation" => "https://hexdocs.pm/#{@name}/"
       }
     ]
   end
 
   def application do
-    [extra_applications: [:logger]]
+    [extra_applications: [:logger, :inets]]
   end
 
   defp deps do
     [
-      {:gen_stage, "~> 0.14"},
-      {:websockex, "~> 0.4"},
-      {:jason, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:credo, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:ex_doc,
-       git: "https://github.com/spaceeec/ex_doc",
-       branch: "feat/umbrella",
-       only: :dev,
-       runtime: false}
+      {:gen_stage, "~> 1.0"},
+      {:gun, "~> 1.3"},
+      {:jason, "~> 1.2", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.23", only: [:dev], runtime: false}
     ]
+  end
+
+  defp docs() do
+    [formatter: "html"]
   end
 
   defp aliases() do

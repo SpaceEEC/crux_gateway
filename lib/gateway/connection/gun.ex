@@ -1,12 +1,12 @@
-defmodule Crux.Gateway.Gun do
-  @moduledoc """
-  Wrapper module for `:gun`, makes it easier to swap out the WebSocket client.
+defmodule Crux.Gateway.Connection.Gun do
+  @moduledoc false
 
-  Sends messages to the invoking process:
-  - `{:connected, pid}`
-  - `{:disconnected, pid, {:close, code, message}}`
-  - `{:packet, pid, packet}`
-  """
+  # Wrapper module for `:gun`, making it easier to swap out the WebSocket clients if necessary in the future.
+
+  # Sends messages to the invoking process:
+  # - `{:connected, pid}`
+  # - `{:disconnected, pid, {:close, code, message}}`
+  # - `{:packet, pid, packet}`
 
   alias :erlang, as: Erlang
   alias :gen_statem, as: GenStateM
@@ -14,14 +14,13 @@ defmodule Crux.Gateway.Gun do
   alias :http_uri, as: HttpUri
   alias :zlib, as: Zlib
 
+  alias Crux.Gateway.Util
+
   require Logger
 
-  ### Client API
+  @max_size 4096
 
-  @typedoc """
-  Reference to the connection.
-  """
-  @type conn :: pid()
+  ### Client API
 
   @doc """
   Starts a gun process linked to the current process.
@@ -54,6 +53,13 @@ defmodule Crux.Gateway.Gun do
   @doc """
   Instructs the gun process to send a frame.
   """
+  def send_frame(conn, frame)
+
+  def send_frame(_conn, {:binary, binary})
+      when byte_size(binary) > @max_size do
+    {:error, :too_large}
+  end
+
   def send_frame(conn, frame) do
     GenStateM.call(conn, {:send, frame})
   end
@@ -78,7 +84,19 @@ defmodule Crux.Gateway.Gun do
   @connecting :connecting
   @connected :connected
 
-  @typep data :: %{
+  defstruct [
+    :parent,
+    :host,
+    :port,
+    :path,
+    :query,
+    :zlib,
+    :buffer,
+    :conn,
+    :expect_disconnect
+  ]
+
+  @typep t :: %__MODULE__{
            # The spawning process
            parent: pid(),
            # Where to connect to
@@ -89,7 +107,7 @@ defmodule Crux.Gateway.Gun do
            # zlib stream context and its buffer
            zlib: Zlib.zstream() | nil,
            buffer: binary(),
-           # gun process
+           # WS connection wrapper process
            conn: pid() | nil,
            # Whether we are expecting a gun_down / disconnect
            # and do not want to notify the spawning process again
@@ -100,7 +118,7 @@ defmodule Crux.Gateway.Gun do
 
   def callback_mode(), do: [:state_functions, :state_enter]
 
-  @spec init({String.t(), pid()}) :: {:ok, :connecting, data} | {:stop, :bad_uri}
+  @spec init({String.t(), pid()}) :: {:ok, :connecting, t()} | {:stop, :bad_uri}
   def init({uri, parent}) do
     case HttpUri.parse(uri, [{:scheme_defaults, [{:wss, 443}]}]) do
       {:error, term} ->
@@ -109,7 +127,7 @@ defmodule Crux.Gateway.Gun do
         {:stop, :bad_uri}
 
       {:ok, {:wss, "", host, port, path, query}} ->
-        data = %{
+        data = %__MODULE__{
           parent: parent,
           host: String.to_charlist(host),
           port: port,
@@ -137,9 +155,9 @@ defmodule Crux.Gateway.Gun do
       _ -> nil
     end
 
-    Zlib.close(data.zlib)
+    :ok = Zlib.close(data.zlib)
 
-    Gun.close(data.conn)
+    :ok = Gun.close(data.conn)
 
     data = %{data | conn: nil, zlib: nil}
 
@@ -148,6 +166,18 @@ defmodule Crux.Gateway.Gun do
 
   def disconnected({:call, from}, :reconnect, data) do
     {:next_state, @connecting, data, {:reply, from, :ok}}
+  end
+
+  def disconnected({:call, from}, {:disconnect, _code, _message}, _data) do
+    {:keep_state_and_data, {:reply, from, :ok}}
+  end
+
+  def disconnected({:call, from}, {:stop, _code, _message}, _data) do
+    {:stop_and_reply, :normal, {:reply, from, :ok}}
+  end
+
+  def disconnected({:call, from}, {:send, _frame}, _data) do
+    {:keep_state_and_data, {:reply, from, {:error, :disconnected}}}
   end
 
   def connecting(:enter, _old_state, data) do
@@ -159,12 +189,14 @@ defmodule Crux.Gateway.Gun do
     # > Gun does not currently support Websocket over HTTP/2.
     {:ok, conn} = Gun.open(data.host, data.port, %{protocols: [:http]})
 
-    Logger.debug(fn -> "Process started, waiting for its connection to up." end)
+    Logger.debug(fn -> "Process started, waiting for its connection to be up." end)
 
     {:ok, :http} = Gun.await_up(conn)
 
     Logger.debug(fn ->
-      "Connection is up, now upgrading it to use the WebSocket protocol, using #{data.path}#{data.query}"
+      "Connection is up, now upgrading it to use the WebSocket protocol, using #{data.path}#{
+        data.query
+      }"
     end)
 
     stream_ref = Gun.ws_upgrade(conn, "#{data.path}#{data.query}")
@@ -182,6 +214,8 @@ defmodule Crux.Gateway.Gun do
   def connecting(:timeout, :connected, data) do
     {:next_state, @connected, data}
   end
+
+  # The connecting state can not receive any messages due to its blocking nature.
 
   def connected(:enter, _old_state, _data) do
     :keep_state_and_data
@@ -225,23 +259,20 @@ defmodule Crux.Gateway.Gun do
 
     buffer = data.buffer <> frame
 
-    {new_buffer, packet} =
+    new_buffer =
       if suffix == <<0x00, 0x00, 0xFF, 0xFF>> do
-        uncompressed =
+        packet =
           Zlib.inflate(data.zlib, buffer)
           |> Erlang.iolist_to_binary()
           |> Erlang.binary_to_term()
+          |> Util.atomify()
 
-        # TODO: atomify
+        send_packet(data, packet)
 
-        {<<>>, uncompressed}
+        <<>>
       else
-        {buffer, nil}
+        buffer
       end
-
-    if packet do
-      send_packet(data, packet)
-    end
 
     data = %{data | buffer: new_buffer}
 
@@ -271,12 +302,16 @@ defmodule Crux.Gateway.Gun do
     {:keep_state, data}
   end
 
+  def connected({:call, from}, :reconnect, _data) do
+    {:keep_state_and_data, {:reply, from, :ok}}
+  end
+
   def connected({:call, from}, {:disconnect, code, message}, data) do
     :ok = Gun.ws_send(data.conn, {:close, code, message})
 
     data = %{data | expect_disconnect: {code, message}}
 
-    {:next_state, @disconnected, data, {:reply, from, :ok}}
+    {:keep_state, data, {:reply, from, :ok}}
   end
 
   def connected({:call, from}, {:stop, code, message}, data) do

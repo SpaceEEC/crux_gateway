@@ -14,7 +14,7 @@ defmodule Crux.Gateway.Command do
   | 2       | identify              | sent only     |
   | 3       | status_update         | sent only     |
   | 4       | voice_state_update    | sent only     |
-  | 5       | voice_guild_ping      | sent only     |
+  | 5       |                       |               |
   | 6       | resume                | sent only     |
   | 7       | reconnect             | received only |
   | 8       | request_guild_members | sent only     |
@@ -26,29 +26,33 @@ defmodule Crux.Gateway.Command do
   """
 
   alias :erlang, as: Erlang
-  alias :gun, as: Gun
+  alias :os, as: OS
 
   @typedoc """
-    Encoded command ready to be sent to the gateway via `Crux.Gateway.Connection.send_command/3`.
+    Encoded command ready to be sent to the gateway via `Crux.Gateway.send_command/3`.
 
     If you want to build custom commands (read: new commands not yet supported by crux_gateway),
     build a valid [Gateway Payload Structure](https://discord.com/developers/docs/topics/gateway#payloads-gateway-payload-structure)
-    and `:erlang.term_to_binary/1` it, then finally wrap it in a `{:binary, your_binary_payload}` tuple.
+    using string keys(!) and pass it to `encode_command/1`.
   """
-  @type command :: Gun.ws_frame()
+  @opaque command :: {:binary, iodata()}
 
   @doc """
   Builds a [Heartbeat](https://discord.com/developers/docs/topics/gateway#heartbeat) command.
 
   Used to signalize the server that the client is still alive and able to receive messages.
+
+  > Internally handled by `Crux.Gateway` already.
   """
   @spec heartbeat(sequence :: non_neg_integer() | nil) :: command()
   def heartbeat(sequence), do: finalize(sequence, 1)
 
   @doc """
-    Builds an [Identify](https://discord.com/developers/docs/topics/gateway#identify) command.
+  Builds an [Identify](https://discord.com/developers/docs/topics/gateway#identify) command.
 
-    Used to identify the gateway connection and "log in".
+  Used to identify the gateway connection and "log in".
+
+  > Internally handled by `Crux.Gateway` already.
   """
   @spec identify(
           data :: %{
@@ -65,8 +69,8 @@ defmodule Crux.Gateway.Command do
       ) do
     presence =
       case args do
-        %{presence: fun} when is_function(fun, 1) ->
-          fun.(shard_id)
+        %{presence: fun} when is_function(fun, 2) ->
+          fun.(shard_id, shard_count)
 
         %{presence: presence} when is_map(presence) ->
           presence
@@ -80,7 +84,7 @@ defmodule Crux.Gateway.Command do
 
     presence = _update_status(presence)
 
-    {os, name} = :os.type()
+    {os, name} = OS.type()
 
     %{
       "token" => token,
@@ -119,7 +123,7 @@ defmodule Crux.Gateway.Command do
   end
 
   @typedoc """
-  Used to set an activity via `status_update/2`.
+  Used to set an activity via `update_status/2`.
 
   `:type` must be a valid [Activity Type](https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-types)
   > Note that streaming requires a twitch url pointing to a possible channel!
@@ -135,8 +139,8 @@ defmodule Crux.Gateway.Command do
 
     Used to update the status of the client, including activity.
   """
-  @spec update_status(status :: String.t(), activities :: [activity()] | nil) :: command()
-  def update_status(status, activities \\ nil) do
+  @spec update_status(status :: String.t(), activities :: [activity()] | []) :: command()
+  def update_status(status, activities \\ []) do
     %{status: status, activities: activities}
     |> _update_status()
     |> finalize(3)
@@ -155,7 +159,7 @@ defmodule Crux.Gateway.Command do
       {k, v} ->
         {to_string(k), v}
     end)
-    |> Map.merge(%{"afk" => false, "since" => nil})
+    |> Map.merge(%{"afk" => false, "since" => 0})
   end
 
   @doc """
@@ -164,7 +168,7 @@ defmodule Crux.Gateway.Command do
   Used to request guild member for a specific guild.
   > Note: This must be sent to the connection handling the guild, otherwise the request will just be ignored.
 
-  The gateway will respond with `:GUILD_MEMBER_CHUNK` packets until all appropriate members are received.
+  The gateway will respond with `:GUILD_MEMBERS_CHUNK` packets until all (requested) members were received.
   """
   @spec request_guild_members(
           guild_id :: Crux.Structs.Snowflake.t(),
@@ -210,6 +214,8 @@ defmodule Crux.Gateway.Command do
   Builds a [Resume](https://discord.com/developers/docs/topics/gateway#resume) command.
 
   Used to resume into a session which was unexpectly disconnected and may be resumable.
+
+  > Internally handled by `Crux.Gateway` already.
   """
   @spec resume(
           data :: %{
@@ -227,18 +233,23 @@ defmodule Crux.Gateway.Command do
     |> finalize(6)
   end
 
+  @doc """
+  Encodes the given command map to a term that can be sent using `Crux.Gateway.send_command/3`.
+  """
+  @spec encode_command(map()) :: command()
+  def encode_command(command) do
+    {:binary, Erlang.term_to_binary(command)}
+  end
+
   @spec finalize(
           data :: %{String.t() => map() | String.t()} | non_neg_integer() | nil,
           op :: integer()
         ) :: command()
   defp finalize(data, op) do
-    data =
-      %{
-        "op" => op,
-        "d" => data
-      }
-      |> Erlang.term_to_binary()
-
-    {:binary, data}
+    %{
+      "op" => op,
+      "d" => data
+    }
+    |> encode_command()
   end
 end

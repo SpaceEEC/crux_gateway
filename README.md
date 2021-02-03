@@ -1,4 +1,4 @@
-# Crux.Gateway
+# Crux.Gateway [![](https://github.com/SpaceEEC/crux_gateway/workflows/Tests/badge.svg?event=push&branch=master)](https://github.com/SpaceEEC/crux_gateway/actions)
 
 Library providing a flexible gateway connection to the Discord API.
 

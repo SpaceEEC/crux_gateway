@@ -1,5 +1,5 @@
 defmodule Crux.Gateway.CommandTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest Crux.Gateway.Command
 
   # Since the commands directly make it WebSocket friendly

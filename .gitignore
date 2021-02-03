@@ -25,5 +25,9 @@ crux_gateway-*.tar
 # VS Code plugin
 .elixir_ls/
 
+.vscode
+
 # Test file
 lib/test.ex
+
+_*/
