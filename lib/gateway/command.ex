@@ -65,10 +65,10 @@ defmodule Crux.Gateway.Command do
         ) :: command()
 
   def identify(
-        %{shard_id: shard_id, shard_count: shard_count, token: token, intents: intents} = args
+        %{shard_id: shard_id, shard_count: shard_count, token: token, intents: intents} = data
       ) do
     presence =
-      args
+      data
       |> _get_presence()
       |> _update_status()
 
@@ -104,8 +104,8 @@ defmodule Crux.Gateway.Command do
     %{}
   end
 
-  defp _get_presence(args)
-       when not is_map_key(args, :presence) do
+  defp _get_presence(data)
+       when not is_map_key(data, :presence) do
     %{}
   end
 
