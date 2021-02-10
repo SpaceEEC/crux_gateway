@@ -7,20 +7,20 @@ defmodule Crux.Gateway.Command do
 
   A list of available op codes:
 
-  | OP Code | Name                  | Direction     |
-  | ------- | --------------------- | ------------- |
-  | 0       | dispatch              | received only |
-  | 1       | heartbeat             | two way       |
-  | 2       | identify              | sent only     |
-  | 3       | status_update         | sent only     |
-  | 4       | voice_state_update    | sent only     |
-  | 5       |                       |               |
-  | 6       | resume                | sent only     |
-  | 7       | reconnect             | received only |
-  | 8       | request_guild_members | sent only     |
-  | 9       | invalid_session       | received only |
-  | 10      | hello                 | received only |
-  | 11      | heartbeat_ack         | received only |
+  | OP Code | Name                   | Direction     |
+  | ------- | ---------------------- | ------------- |
+  | 0       | dispatch               | received only |
+  | 1       | heartbeat              | two way       |
+  | 2       | identify               | sent only     |
+  | 3       | status_update          | sent only     |
+  | 4       | voice_state_update     | sent only     |
+  | 5       | Removed / Not for bots | neither       |
+  | 6       | resume                 | sent only     |
+  | 7       | reconnect              | received only |
+  | 8       | request_guild_members  | sent only     |
+  | 9       | invalid_session        | received only |
+  | 10      | hello                  | received only |
+  | 11      | heartbeat_ack          | received only |
 
   [Gateway Lifecycle Flowchart](https://s.gus.host/flowchart.svg)
   """
