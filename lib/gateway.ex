@@ -76,6 +76,7 @@ defmodule Crux.Gateway do
   # Optional
   - `:intents` - The types of events you would like to receive from Discord. (See also `Crux.Structs.Intents`)
   - > If none are provided here, you must provide them when starting a shard.
+  - `:shards` - Initial shards to launch on startup.
   - `:presence` - Used as initial presence for every session. (See also `t:presence/0`)
   - > Defaults to none (the bot will be online with no activity)
   - `:max_concurrency` - How many shards may identify within 5 seconds, obtained from `/gateway/bot` (See also `c:Crux.Rest.get_gateway_bot/0`)
@@ -213,11 +214,31 @@ defmodule Crux.Gateway do
       {Elixir.Registry, keys: :unique, name: Registry.name(opts.name), meta: [opts: opts]},
       {RateLimiter,
        type: :identify, max_concurrency: Map.get(opts, :max_concurrency, 1), name: opts.name},
-      {ShardSupervisor, opts}
+      {ShardSupervisor, opts},
+      {Task, shard_starter(opts)}
     ]
 
     opts = [strategy: :rest_for_one]
     Supervisor.init(children, opts)
+  end
+
+  defp shard_starter(%{name: name, shards: shards}) do
+    fn ->
+      for shard <- shards do
+        {:ok, _pid} = ShardSupervisor.start_shard(name, shard)
+      end
+    end
+  end
+
+  defp shard_starter(%{}), do: fn -> :ok end
+
+  defp check_opts!(%{shards: shards})
+       when not is_list(shards) do
+    raise ArgumentError, """
+    Expected :shards to be a list.
+
+    Received: #{inspect(shards)}
+    """
   end
 
   defp check_opts!(%{max_concurrency: max_concurrency})
