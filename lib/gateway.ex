@@ -12,6 +12,7 @@ defmodule Crux.Gateway do
   alias Crux.Gateway.Connection
   alias Crux.Gateway.RateLimiter
   alias Crux.Gateway.Registry
+  alias Crux.Gateway.Shard.Starter, as: ShardStarter
   alias Crux.Gateway.Shard.Supervisor, as: ShardSupervisor
 
   ###
@@ -215,22 +216,12 @@ defmodule Crux.Gateway do
       {RateLimiter,
        type: :identify, max_concurrency: Map.get(opts, :max_concurrency, 1), name: opts.name},
       {ShardSupervisor, opts},
-      {Task, shard_starter(opts)}
+      {ShardStarter, opts}
     ]
 
     opts = [strategy: :rest_for_one]
     Supervisor.init(children, opts)
   end
-
-  defp shard_starter(%{name: name, shards: shards}) do
-    fn ->
-      for shard <- shards do
-        {:ok, _pid} = ShardSupervisor.start_shard(name, shard)
-      end
-    end
-  end
-
-  defp shard_starter(%{}), do: fn -> :ok end
 
   defp check_opts!(%{shards: shards})
        when not is_list(shards) do
