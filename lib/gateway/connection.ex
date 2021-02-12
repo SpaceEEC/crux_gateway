@@ -119,12 +119,6 @@ defmodule Crux.Gateway.Connection do
           shard_count: shard_count
         } = opts
       ) do
-    pid = self()
-
-    spawn(fn ->
-      :ok = :sys.trace(pid, true)
-    end)
-
     Logger.info(fn -> "Starting connection {#{shard_id}, #{shard_count}}." end)
 
     name =
