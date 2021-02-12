@@ -275,10 +275,10 @@ defmodule Crux.Gateway.Connection do
         Logger.debug(fn -> "Sending RESUME" end)
         Command.resume(data)
       else
-        Logger.debug(fn -> "Sending IDENTIFY" end)
-
         # TODO: This potentially can block... a long time
         :ok = RateLimiter.enqueue_identify(data)
+        Logger.debug(fn -> "Sending IDENTIFY" end)
+
         Command.identify(data)
       end
 
@@ -482,10 +482,11 @@ defmodule Crux.Gateway.Connection do
         sleep_time = 1_000 + Rand.uniform(4000)
         Logger.debug(fn -> "Waiting #{sleep_time} before identifying." end)
         Process.sleep(sleep_time)
-        Logger.debug(fn -> "Sending IDENTIFY" end)
 
         # TODO: This potentially can block... a long time
         :ok = RateLimiter.enqueue_identify(data)
+        Logger.debug(fn -> "Sending IDENTIFY" end)
+
         {Command.identify(data), %{data | seq: nil, session_id: nil}}
       end
 
