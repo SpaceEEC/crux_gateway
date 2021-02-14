@@ -162,7 +162,7 @@ Can be either a map representing the presence to use or a function taking the sh
   <div class="summary-signature">
     <a href="#producers/1">producers(name)</a>
   </div>
-    <div class="summary-synopsis"><p>A map of all running producers.</p></div>
+    <div class="summary-synopsis"><p>A map of all running <a href="https://hexdocs.pm/gen_stage/1.0.0/GenStage.html"><code class="inline">GenStage</code></a> producers.</p></div>
 </div>
 <div class="summary-row">
   <div class="summary-signature">
@@ -498,7 +498,7 @@ Functions          </h1>
           <pre>producers(<a href="#t:gateway/0">gateway</a>()) :: %{required(<a href="#t:shard_tuple/0">shard_tuple</a>()) =&gt; <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">pid</a>()}</pre>
       </div>
 
-<p>A map of all running producers.</p><p>See <a href="#t:event/0"><code class="inline">event/0</code></a> for the type of published event.</p>  </section>
+<p>A map of all running <a href="https://hexdocs.pm/gen_stage/1.0.0/GenStage.html"><code class="inline">GenStage</code></a> producers.</p><p>See <a href="#t:event/0"><code class="inline">event/0</code></a> for the type of published event.</p>  </section>
 </section>
 <section class="detail" id="send_command/3">
   <div class="detail-header">
@@ -521,7 +521,7 @@ Functions          </h1>
   :ok | {:error, :not_found | :no_rate_limiter | :not_ready | :too_large}</pre>
       </div>
 
-<p>Send a command to Discord through the specified shard.</p><p>Errors:</p><ul><li><code class="inline">:not_found</code> - The connection process for the given shard tuple wasn't found. (That shard likely wasn't started, or happened to just crash.)</li><li><code class="inline">:no_rate_limiter</code> - The connection was found, but its rate limiter wasn't. (This means it crashed, that shouldn't happen.)</li><li><code class="inline">:not_ready</code> - The connection is currently not ready, try again later.</li><li><code class="inline">:too_large</code> - The given command was too large. (You shouldn't exceed this, the payload likely is invalid anyway.)</li></ul>  </section>
+<p>Send a command to Discord through the specified shard.</p><p>Errors:</p><ul><li><code class="inline">:not_ready</code> - The connection is currently not ready, try again later.</li><li><code class="inline">:too_large</code> - The given command was too large. (You shouldn't exceed this, the payload likely is invalid anyway.)</li><li><code class="inline">:not_found</code> - The connection process for the given shard tuple wasn't found. (This means that there is no process with that id and count. Or it just crashed, which shouldn't happen.)</li><li><code class="inline">:no_rate_limiter</code> - The connection was found, but its rate limiter wasn't. (This means it crashed, that shouldn't happen.)</li></ul>  </section>
 </section>
 <section class="detail" id="shards/1">
   <div class="detail-header">
