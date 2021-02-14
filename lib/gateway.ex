@@ -157,7 +157,7 @@ defmodule Crux.Gateway do
   defdelegate shards(name), to: ShardSupervisor
 
   @doc """
-  A map of all running producers.
+  A map of all running `GenStage` producers.
 
   See `t:event/0` for the type of published event.
   """
@@ -169,10 +169,10 @@ defmodule Crux.Gateway do
   Send a command to Discord through the specified shard.
 
   Errors:
-  - `:not_found` - The connection process for the given shard tuple wasn't found. (That shard likely wasn't started, or happened to just crash.)
-  - `:no_rate_limiter` - The connection was found, but its rate limiter wasn't. (This means it crashed, that shouldn't happen.)
   - `:not_ready` - The connection is currently not ready, try again later.
   - `:too_large` - The given command was too large. (You shouldn't exceed this, the payload likely is invalid anyway.)
+  - `:not_found` - The connection process for the given shard tuple wasn't found. (This means that there is no process with that id and count. Or it just crashed, which shouldn't happen.)
+  - `:no_rate_limiter` - The connection was found, but its rate limiter wasn't. (This means it crashed, that shouldn't happen.)
   """
   @doc since: "0.3.0"
   @spec send_command(
