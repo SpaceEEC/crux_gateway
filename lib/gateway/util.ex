@@ -9,6 +9,16 @@ defmodule Crux.Gateway.Util do
   def atomify(other), do: other
 
   defp atomify_kv({k, v}) when is_atom(k), do: {k, atomify(v)}
-  defp atomify_kv({k, v}) when is_binary(k), do: {String.to_atom(k), atomify(v)}
+
+  defp atomify_kv({k, v}) when is_binary(k) do
+    new_k =
+      case Integer.parse(k) do
+        {new_k, ""} -> new_k
+        _ -> String.to_atom(k)
+      end
+
+    {new_k, atomify(v)}
+  end
+
   defp atomify_kv({k, v}), do: {k, atomify(v)}
 end
