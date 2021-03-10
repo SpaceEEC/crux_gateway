@@ -11,47 +11,46 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    container:
-      image: spaceeec/elixir:1.10-slim
-
     steps:
-      - name: Checkout Code Branch
-        uses: actions/checkout@v2
-        with:
-          path: repo
+    - name: Checkout Code Branch
+      uses: actions/checkout@v2
+      with:
+        path: repo
 
-      - name: Install Dependencies
-        run: |
-           mix local.rebar --force
-           mix local.hex --force
-           mix deps.get
-        working-directory: repo
+    - uses: erlef/setup-elixir@v1
+      with:
+        otp-version: 22.x
+        elixir-version: 1.10.x
 
-      - name: Generate Documentation
-        run: mix docs
-        working-directory: repo
+    - name: Install Dependencies
+      run: mix deps.get
+      working-directory: repo
 
-      - name: Checkout Documentation Branch
-        uses: actions/checkout@v2
-        with:
-          ref: docs
-          path: docs
+    - name: Generate Documentation
+      run: mix docs
+      working-directory: repo
 
-      - name: Copy Documentation
-        run: |
-          rm -rf ./docs/docs
-          mv ./repo/doc ./docs/docs
+    - name: Checkout Documentation Branch
+      uses: actions/checkout@v2
+      with:
+        ref: docs
+        path: docs
 
-      - name: Commit and Push Documentation
-        run: |
-          git config user.name "${GITHUB_ACTOR}"
-          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-          git add .
-          git diff HEAD --quiet
-          if [ "$?" -ne "0" ]; then
-            git commit -m "docs: documentation build for ${GITHUB_SHA}"
-            git push
-          else
-            echo "nothing to commit, working tree clean"
-          fi
-        working-directory: docs
+    - name: Copy Documentation
+      run: |
+        rm -rf ./docs/docs
+        mv ./repo/doc ./docs/docs
+
+    - name: Commit and Push Documentation
+      run: |
+        git config user.name "${GITHUB_ACTOR}"
+        git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+        git add .
+        git diff HEAD --quiet
+        if [ "$?" -ne "0" ]; then
+          git commit -m "docs: documentation build for ${GITHUB_SHA}"
+          git push
+        else
+          echo "nothing to commit, working tree clean"
+        fi
+      working-directory: docs
