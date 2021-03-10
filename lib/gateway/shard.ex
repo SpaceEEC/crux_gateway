@@ -83,9 +83,9 @@ defmodule Crux.Gateway.Shard do
   end
 
   defp check_opts!(%{shard_id: shard_id, shard_count: shard_count})
-       when shard_id > shard_count do
+       when shard_id >= shard_count do
     raise ArgumentError, """
-    Expected :shard_id to not be greater than :shard_count.
+    Expected :shard_id to not be greater than or equal to :shard_count.
 
     Received: #{shard_id} > #{shard_count}
     """
