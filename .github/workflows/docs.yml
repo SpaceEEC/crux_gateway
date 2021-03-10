@@ -54,3 +54,4 @@ jobs:
           echo "nothing to commit, working tree clean"
         fi
       working-directory: docs
+      shell: sh {0}
