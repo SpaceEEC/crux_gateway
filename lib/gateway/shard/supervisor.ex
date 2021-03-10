@@ -54,7 +54,7 @@ defmodule Crux.Gateway.Shard.Supervisor do
       {
         # Match {{process_type, shard_id, shard_count}, pid, _value}
         {{:"$1", :"$2", :"$3"}, :"$4", :_},
-        # Guard process_type == :shard
+        # Guard process_type == type
         [{:==, :"$1", type}],
         # Return {{shard_id, shard_count}, pid}
         [{{{{:"$2", :"$3"}}, :"$4"}}]

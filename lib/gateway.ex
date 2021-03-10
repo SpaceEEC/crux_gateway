@@ -42,6 +42,7 @@ defmodule Crux.Gateway do
   """
   @typedoc since: "0.2.0"
   @type gateway :: atom()
+
   @typedoc """
   Used as initial presence for every session.
   Can be either a map representing the presence to use or a function taking the shard id and the shard count and returning a presence map to use.
