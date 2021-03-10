@@ -194,12 +194,11 @@ defmodule Crux.Gateway.Connection.Gun do
     {:ok, :http} = Gun.await_up(conn)
 
     Logger.debug(fn ->
-      "Connection is up, now upgrading it to use the WebSocket protocol, using #{data.path}#{
-        data.query
-      }"
+      "Connection is up, now upgrading it to use the WebSocket protocol, using " <>
+        data.path <> data.query
     end)
 
-    stream_ref = Gun.ws_upgrade(conn, "#{data.path}#{data.query}")
+    stream_ref = Gun.ws_upgrade(conn, data.path <> data.query)
     :ok = await_upgrade(conn, stream_ref)
 
     Logger.debug(fn -> "Connection upgraded to use the WebSocket protocol, we are good to go!" end)
