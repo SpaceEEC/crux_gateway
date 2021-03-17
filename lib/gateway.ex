@@ -73,18 +73,22 @@ defmodule Crux.Gateway do
   # Required
   - `:name` - The name to use for the `Crux.Gateway` process.
   - `:token` - The bot token to use, you can get the one of your bot from [here](https://discord.com/developers/applications).
-  - `:url` - The gateway URL to connect to (must use the wss protocol), obtained from `/gateway/bot` (See also `c:Crux.Rest.get_gateway_bot/0`)
+  - `:url` - The gateway URL to connect to (must use the wss protocol), obtained from `GET /gateway/bot`. (See also `c:Crux.Rest.get_gateway_bot/0`)
 
   # Optional
   - `:intents` - The types of events you would like to receive from Discord. (See also `Crux.Structs.Intents`)
-  - > If none are provided here, you must provide them when starting a shard.
+
+    > If none are provided here, you must provide them when starting a shard.
   - `:shards` - Initial shards to launch on startup.
   - `:presence` - Used as initial presence for every session. (See also `t:presence/0`)
-  - > Defaults to none (the bot will be online with no activity)
+
+    > Defaults to none (the bot will be online with no activity)
   - `:max_concurrency` - How many shards may identify within 5 seconds, obtained from `/gateway/bot` (See also `c:Crux.Rest.get_gateway_bot/0`)
-  - > Defaults to `1`
+
+    > Defaults to `1`
   - `:dispatcher` - An atom representing a dispatcher module or a tuple of one and inital options.
-  - > Defaults to `GenStage.DemandDispatcher`.
+
+    > Defaults to `GenStage.DemandDispatcher`.
 
   """
   @typedoc since: "0.3.0"
@@ -94,7 +98,7 @@ defmodule Crux.Gateway do
   @typedoc since: "0.3.0"
   @type opts_map ::
           %{
-            optional(:intents) => non_neg_integer(),
+            optional(:intents) => Crux.Structs.Intents.t(),
             optional(:presence) => presence(),
             optional(:shards) => [shard_tuple() | shard_opts()],
             optional(:max_concurrency) => pos_integer(),
@@ -112,19 +116,22 @@ defmodule Crux.Gateway do
   - `:shard_id` - The id of the shard you want to start.
   - `shard_count` - The shard count of the shard you want to start.
   - `:intents` - What kind of events you would like to receive. (See also `Crux.Structs.Intents`)
-  - > Optional when specified in `t:opts/0`, if specified here anyway, this value will override the former.
+
+    > Optional when specified in `t:opts/0`, if specified here anyway, this value will override the former.
 
   # Optional
   - `:intents` - What events you would like to receive from Discord. (See also `Crux.Structs.Intents`)
-  - > Required when not specified in `t:opts/0`, if specified here anyway, this value will override the former.
+
+    > Required when not specified in `t:opts/0`, if specified here anyway, this value will override the former.
   - `:presence` - Used as initial presence for every session. (See also `t:presence/0`)
-  - > If present this will override the presenve provided when starting `Crux.Gateway`.
+
+    > If present this will override the presenve provided when starting `Crux.Gateway`.
   - `:session_id` - If you want to (try to) resume a disconnected session, this also requires `:seq` to be set.
   - `:seq` - If you want to (try to) resume a disconnected session, this also requires `:session_id` to be set.
   """
   @typedoc since: "0.3.0"
   @type shard_opts :: %{
-          optional(:intents) => non_neg_integer(),
+          optional(:intents) => Crux.Structs.Intents.t(),
           optional(:presence) => presence(),
           optional(:session_id) => String.t(),
           optional(:seq) => pos_integer(),
