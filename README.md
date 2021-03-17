@@ -1,4 +1,4 @@
-# Crux.Gateway [![](https://github.com/SpaceEEC/crux_gateway/workflows/Tests/badge.svg?event=push&branch=master)](https://github.com/SpaceEEC/crux_gateway/actions)
+# Crux.Gateway [![](https://github.com/SpaceEEC/crux_gateway/workflows/Tests/badge.svg?event=push&branch=master)](https://github.com/SpaceEEC/crux_gateway/actions) [![](https://github.com/SpaceEEC/crux_gateway/workflows/Documentation/badge.svg?event=push&branch=master)](https://spaceeec.github.io/crux_gateway)
 
 Library providing a flexible gateway connection to the Discord API.
 
@@ -7,7 +7,7 @@ Library providing a flexible gateway connection to the Discord API.
  - [Documentation](https://hexdocs.pm/crux_gateway/0.2.3/)
  - [Github](https://github.com/SpaceEEC/crux_gateway/)
  - [Changelog](https://github.com/SpaceEEC/crux_gateway/releases/tag/0.2.3/)
- - [Umbrella Development Documentation](https://crux.randomly.space/)
+ - [Crux Libraries Overview](https://github.com/SpaceEEC/crux)
 
 ## Installation
 
