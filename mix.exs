@@ -48,7 +48,12 @@ defmodule Crux.Gateway.MixProject do
   end
 
   defp docs() do
-    [formatter: "html"]
+    [
+      formatter: "html",
+      extras: [
+        "pages/EXAMPLES.md"
+      ]
+    ]
   end
 
   defp aliases() do
