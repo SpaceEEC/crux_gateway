@@ -270,19 +270,22 @@ defmodule Crux.Gateway.Connection do
   #####
 
   def waiting_ready(:enter, _old_state, %{conn: conn} = data) do
-    frame =
-      if data.seq && data.session_id do
-        Logger.debug(fn -> "Sending RESUME" end)
-        Command.resume(data)
-      else
-        # TODO: This potentially can block... a long time
+    if data.seq && data.session_id do
+      Logger.debug(fn -> "Sending RESUME" end)
+
+      frame = Command.resume(data)
+      :ok = Gun.send_frame(conn, frame)
+    else
+      # To avoid blocking the connection for a longer time (and thus miss heartbeats).
+      Kernel.spawn(fn ->
+        Logger.debug(fn -> "Queueing IDENTIFY" end)
         :ok = RateLimiter.enqueue_identify(data)
         Logger.debug(fn -> "Sending IDENTIFY" end)
 
-        Command.identify(data)
-      end
-
-    :ok = Gun.send_frame(conn, frame)
+        frame = Command.identify(data)
+        :ok = Gun.send_frame(conn, frame)
+      end)
+    end
 
     :keep_state_and_data
   end
@@ -363,6 +366,8 @@ defmodule Crux.Gateway.Connection do
     Logger.error(fn ->
       "#{inspect(reason)} #{inspect(state)} #{inspect(data)}"
     end)
+
+    Gateway.stop_shard(data.name, {data.shard_id, data.shard_count})
   end
 
   defp handle_common(state, type, message, data)
@@ -473,24 +478,32 @@ defmodule Crux.Gateway.Connection do
       """
     end)
 
-    {frame, data} =
+    data =
       if resumable? && seq && session_id do
-        Logger.debug(fn -> "Sending RESUMSE" end)
-        {Command.resume(data), data}
+        Logger.debug(fn -> "Sending RESUME" end)
+        frame = Command.resume(data)
+
+        :ok = Gun.send_frame(conn, frame)
+
+        data
       else
-        # "wait a random amount of time—between 1 and 5 seconds"
-        sleep_time = 1_000 + Rand.uniform(4000)
-        Logger.debug(fn -> "Waiting #{sleep_time} before identifying." end)
-        Process.sleep(sleep_time)
+        # To avoid blocking the connection for a longer time (and thus miss heartbeats).
+        Kernel.spawn(fn ->
+          # "wait a random amount of time—between 1 and 5 seconds"
+          sleep_time = 1_000 + Rand.uniform(4000)
+          Logger.debug(fn -> "Waiting #{sleep_time} before identifying." end)
+          Process.sleep(sleep_time)
 
-        # TODO: This potentially can block... a long time
-        :ok = RateLimiter.enqueue_identify(data)
-        Logger.debug(fn -> "Sending IDENTIFY" end)
+          Logger.debug(fn -> "Queueing IDENTIFY" end)
+          :ok = RateLimiter.enqueue_identify(data)
+          Logger.debug(fn -> "Sending IDENTIFY" end)
 
-        {Command.identify(data), %{data | seq: nil, session_id: nil}}
+          frame = Command.identify(data)
+          :ok = Gun.send_frame(conn, frame)
+        end)
+
+        %{data | seq: nil, session_id: nil}
       end
-
-    :ok = Gun.send_frame(conn, frame)
 
     data
   end
