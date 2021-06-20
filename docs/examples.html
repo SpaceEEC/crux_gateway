@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.23.0">
+    <meta name="project" content="crux_gateway v0.3.0-dev">
+    <title>Examples — crux_gateway v0.3.0-dev</title>
+    <link rel="stylesheet" href="dist/elixir-9f91ebe876dc01d67920.css" />
+    <script src="dist/sidebar_items-1fc5179ff3.js"></script>
+      <script src="docs_config.js"></script>
+    <script async src="dist/app-60a0c9f10e9e52eae31f.js"></script>
+  </head>
+  <body data-type="extras">
+    <script>try { if(localStorage.getItem('night-mode') === 'true') document.body.className += ' night-mode'; } catch (e) { }</script>
+<div class="main">
+
+<button class="sidebar-button sidebar-toggle">
+  <span class="icon-menu" title="Collapse/expand sidebar"></span>
+</button>
+
+<section class="sidebar">
+  <form class="sidebar-search" action="search.html">
+    <button type="submit" class="search-button" aria-label="Submit Search">
+      <span class="icon-search" aria-hidden="true" title="Submit search"></span>
+    </button>
+    <button type="button" tabindex="-1" class="search-close-button" aria-label="Cancel Search">
+      <span class="icon-cross" aria-hidden="true" title="Cancel search"></span>
+    </button>
+    <label class="search-label">
+      <input name="q" type="text" id="search-list" class="search-input" placeholder="Search..." aria-label="Input your search terms" autocomplete="off" />
+    </label>
+  </form>
+
+  <div class="autocomplete">
+    <div class="autocomplete-results">
+    </div>
+  </div>
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectDetails">
+      <a href="https://github.com/SpaceEEC/crux_gateway/" class="sidebar-projectName">
+crux_gateway      </a>
+      <strong class="sidebar-projectVersion">
+        v0.3.0-dev
+      </strong>
+    </div>
+  </div>
+
+  <ul class="sidebar-listNav">
+    <li><a id="extras-list" href="#full-list">Pages</a></li>
+
+      <li><a id="modules-list" href="#full-list">Modules</a></li>
+
+  </ul>
+  <div class="gradient"></div>
+  <ul id="full-list" class="sidebar-fullList"></ul>
+</section>
+
+<section class="content">
+  <div class="content-outer">
+    <div id="content" class="content-inner">
+
+<h1>Examples</h1><h2 id="small-everything" class="section-heading">
+  <a href="#small-everything" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Small Everything
+</h2>
+<p>A simple example of Crux.Gateway in combination with Crux.Rest and Crux.Structures,
+although with small adjustments this would work fine without.</p><h3 id="application-supervisor" class="section-heading">
+  <a href="#application-supervisor" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Application Supervisor
+</h3>
+<p>The first component: The Application Supervisor,
+the gateway can be started at whatever supervisor level however.</p><pre><code class="nohighlight makeup elixir"><span class="kd">defmodule</span><span class="w"> </span><span class="nc">MyApp.Application</span><span class="w"> </span><span class="k" data-group-id="3056071804-1">do</span><span class="w">
+  </span><span class="kn">use</span><span class="w"> </span><span class="nc">Application</span><span class="w">
+
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">start</span><span class="p" data-group-id="3056071804-2">(</span><span class="bp">_</span><span class="p">,</span><span class="w"> </span><span class="bp">_</span><span class="p" data-group-id="3056071804-2">)</span><span class="w"> </span><span class="k" data-group-id="3056071804-3">do</span><span class="w">
+    </span><span class="n">children</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="3056071804-4">[</span><span class="w">
+        </span><span class="p" data-group-id="3056071804-5">{</span><span class="nc">MyApp.Rest</span><span class="p">,</span><span class="w"> </span><span class="ss">token</span><span class="p">:</span><span class="w"> </span><span class="nc">MyApp</span><span class="o">.</span><span class="n">token!</span><span class="p" data-group-id="3056071804-6">(</span><span class="p" data-group-id="3056071804-6">)</span><span class="p" data-group-id="3056071804-5">}</span><span class="p">,</span><span class="w"> </span><span class="c1"># Assuming that MyApp.Rest is a module using Crux.Rest</span><span class="w">
+        </span><span class="p" data-group-id="3056071804-7">{</span><span class="nc">Crux.Gateway</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">gateway_config</span><span class="o">/</span><span class="mi">0</span><span class="p" data-group-id="3056071804-7">}</span><span class="p">,</span><span class="w"> </span><span class="c1"># This function is evaluated once when Crux.Gateway is started</span><span class="w">
+        </span><span class="nc">MyApp.ConsumerSupervisor</span><span class="w">
+    </span><span class="p" data-group-id="3056071804-4">]</span><span class="w">
+
+    </span><span class="n">opts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="3056071804-8">[</span><span class="ss">strategy</span><span class="p">:</span><span class="w"> </span><span class="ss">:one_for_one</span><span class="p">,</span><span class="w"> </span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="nc">MyApp.Supervisor</span><span class="p" data-group-id="3056071804-8">]</span><span class="w">
+    </span><span class="nc">Supervisor</span><span class="o">.</span><span class="n">init</span><span class="p" data-group-id="3056071804-9">(</span><span class="n">children</span><span class="p">,</span><span class="w"> </span><span class="n">opts</span><span class="p" data-group-id="3056071804-9">)</span><span class="w">
+  </span><span class="k" data-group-id="3056071804-3">end</span><span class="w">
+
+  </span><span class="kd">defp</span><span class="w"> </span><span class="nf">gateway_config</span><span class="p" data-group-id="3056071804-10">(</span><span class="p" data-group-id="3056071804-10">)</span><span class="w"> </span><span class="k" data-group-id="3056071804-11">do</span><span class="w">
+    </span><span class="p" data-group-id="3056071804-12">%{</span><span class="ss">url</span><span class="p">:</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w"> </span><span class="ss">shards</span><span class="p">:</span><span class="w"> </span><span class="n">shards</span><span class="p">,</span><span class="w"> </span><span class="ss">session_start_limit</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3056071804-13">%{</span><span class="ss">max_concurrency</span><span class="p">:</span><span class="w"> </span><span class="n">max_concurrency</span><span class="p" data-group-id="3056071804-13">}</span><span class="p" data-group-id="3056071804-12">}</span><span class="w"> </span><span class="o">=</span><span class="w">
+      </span><span class="nc">MyApp.Rest</span><span class="o">.</span><span class="n">get_gateway_bot!</span><span class="p" data-group-id="3056071804-14">(</span><span class="p" data-group-id="3056071804-14">)</span><span class="w">
+    
+    </span><span class="p" data-group-id="3056071804-15">%{</span><span class="w">
+      </span><span class="ss">max_concurrency</span><span class="p">:</span><span class="w"> </span><span class="n">max_concurrency</span><span class="p">,</span><span class="w">
+      </span><span class="ss">intents</span><span class="p">:</span><span class="w"> </span><span class="nc">Crux.Structs.Intents</span><span class="o">.</span><span class="n">resolve</span><span class="p" data-group-id="3056071804-16">(</span><span class="ss">:guild_messages</span><span class="p" data-group-id="3056071804-16">)</span><span class="p">,</span><span class="w">
+      </span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="nc">MyApp.Gateway</span><span class="p">,</span><span class="w">
+      </span><span class="ss">token</span><span class="p">:</span><span class="w"> </span><span class="nc">MyApp</span><span class="o">.</span><span class="n">token!</span><span class="p" data-group-id="3056071804-17">(</span><span class="p" data-group-id="3056071804-17">)</span><span class="p">,</span><span class="w">
+      </span><span class="ss">url</span><span class="p">:</span><span class="w"> </span><span class="n">url</span><span class="p">,</span><span class="w">
+      </span><span class="ss">shards</span><span class="p">:</span><span class="w"> </span><span class="k">for</span><span class="p" data-group-id="3056071804-18">(</span><span class="n">shard_id</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="mi">0</span><span class="o">..</span><span class="p" data-group-id="3056071804-19">(</span><span class="n">shards</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="3056071804-19">)</span><span class="p">,</span><span class="w"> </span><span class="ss">do</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3056071804-20">{</span><span class="n">shard_id</span><span class="p">,</span><span class="w"> </span><span class="n">shards</span><span class="p" data-group-id="3056071804-20">}</span><span class="p" data-group-id="3056071804-18">)</span><span class="w">
+    </span><span class="p" data-group-id="3056071804-15">}</span><span class="w">
+  </span><span class="k" data-group-id="3056071804-11">end</span><span class="w">
+</span><span class="k" data-group-id="3056071804-1">end</span></code></pre><h3 id="consumer-supervisor" class="section-heading">
+  <a href="#consumer-supervisor" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Consumer Supervisor
+</h3>
+<p>The second component: The Consumer Supervisor for gateway dispatches.</p><p>This is pretty much just boilerplate code:</p><pre><code class="nohighlight makeup elixir"><span class="kd">defmodule</span><span class="w"> </span><span class="nc">MyApp.ConsumerSupervisor</span><span class="w"> </span><span class="k" data-group-id="1052801089-1">do</span><span class="w">
+  </span><span class="kn">use</span><span class="w"> </span><span class="nc">ConsumerSupervisor</span><span class="w">
+
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">start_link</span><span class="p" data-group-id="1052801089-2">(</span><span class="n">arg</span><span class="p" data-group-id="1052801089-2">)</span><span class="w"> </span><span class="k" data-group-id="1052801089-3">do</span><span class="w">
+    </span><span class="nc">ConsumerSupervisor</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="1052801089-4">(</span><span class="bp">__MODULE__</span><span class="p">,</span><span class="w"> </span><span class="n">arg</span><span class="p">,</span><span class="w"> </span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="bp">__MODULE__</span><span class="p" data-group-id="1052801089-4">)</span><span class="w">
+  </span><span class="k" data-group-id="1052801089-3">end</span><span class="w">
+
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">init</span><span class="p" data-group-id="1052801089-5">(</span><span class="c">_arg</span><span class="p" data-group-id="1052801089-5">)</span><span class="w"> </span><span class="k" data-group-id="1052801089-6">do</span><span class="w">
+    </span><span class="n">pids</span><span class="w"> </span><span class="o">=</span><span class="w">
+      </span><span class="nc">MyApp.Gateway</span><span class="w">
+      </span><span class="o">|&gt;</span><span class="w"> </span><span class="nc">Crux.Gateway</span><span class="o">.</span><span class="n">producers</span><span class="p" data-group-id="1052801089-7">(</span><span class="p" data-group-id="1052801089-7">)</span><span class="w">
+      </span><span class="o">|&gt;</span><span class="w"> </span><span class="nc">Map</span><span class="o">.</span><span class="n">values</span><span class="p" data-group-id="1052801089-8">(</span><span class="p" data-group-id="1052801089-8">)</span><span class="w">
+
+    </span><span class="n">opts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="1052801089-9">[</span><span class="ss">strategy</span><span class="p">:</span><span class="w"> </span><span class="ss">:one_for_one</span><span class="p">,</span><span class="w"> </span><span class="ss">subscribe_to</span><span class="p">:</span><span class="w"> </span><span class="n">pids</span><span class="p" data-group-id="1052801089-9">]</span><span class="w">
+    </span><span class="nc">ConsumerSupervisor</span><span class="o">.</span><span class="n">init</span><span class="p" data-group-id="1052801089-10">(</span><span class="p" data-group-id="1052801089-11">[</span><span class="nc">MyApp.Consumer</span><span class="p" data-group-id="1052801089-11">]</span><span class="p">,</span><span class="w"> </span><span class="n">opts</span><span class="p" data-group-id="1052801089-10">)</span><span class="w">
+  </span><span class="k" data-group-id="1052801089-6">end</span><span class="w">
+</span><span class="k" data-group-id="1052801089-1">end</span></code></pre><h3 id="consumer" class="section-heading">
+  <a href="#consumer" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Consumer
+</h3>
+<p>The third and last component: The consumer.</p><p>This module is actually handling the incoming gateway dispatches.
+This small example is just replying with <code class="inline">Pong!</code> whenever a non-bot user sends <code class="inline">!ping</code> in any channel.</p><pre><code class="nohighlight makeup elixir"><span class="kd">defmodule</span><span class="w"> </span><span class="nc">MyApp.Consumer</span><span class="w"> </span><span class="k" data-group-id="4966683571-1">do</span><span class="w">
+  </span><span class="kn">require</span><span class="w"> </span><span class="nc">Logger</span><span class="w">
+
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">child_spec</span><span class="p" data-group-id="4966683571-2">(</span><span class="c">_arg</span><span class="p" data-group-id="4966683571-2">)</span><span class="w"> </span><span class="k" data-group-id="4966683571-3">do</span><span class="w">
+    </span><span class="p" data-group-id="4966683571-4">%{</span><span class="w">
+      </span><span class="ss">id</span><span class="p">:</span><span class="w"> </span><span class="bp">__MODULE__</span><span class="p">,</span><span class="w">
+      </span><span class="ss">start</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="4966683571-5">{</span><span class="bp">__MODULE__</span><span class="p">,</span><span class="w"> </span><span class="ss">:start_link</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="4966683571-6">[</span><span class="p" data-group-id="4966683571-6">]</span><span class="p" data-group-id="4966683571-5">}</span><span class="p">,</span><span class="w">
+      </span><span class="ss">restart</span><span class="p">:</span><span class="w"> </span><span class="ss">:temporary</span><span class="w"> </span><span class="c1"># or :transient, if you want the process to restart on crashes</span><span class="w">
+    </span><span class="p" data-group-id="4966683571-4">}</span><span class="w">
+  </span><span class="k" data-group-id="4966683571-3">end</span><span class="w">
+
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">start_link</span><span class="p" data-group-id="4966683571-7">(</span><span class="p" data-group-id="4966683571-8">{</span><span class="n">type</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="n">shard</span><span class="p" data-group-id="4966683571-8">}</span><span class="p" data-group-id="4966683571-7">)</span><span class="w"> </span><span class="k" data-group-id="4966683571-9">do</span><span class="w">
+    </span><span class="nc">Task</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="4966683571-10">(</span><span class="w">
+      </span><span class="bp">__MODULE__</span><span class="p">,</span><span class="w">
+      </span><span class="ss">:handle_event</span><span class="p">,</span><span class="w">
+      </span><span class="p" data-group-id="4966683571-11">[</span><span class="n">type</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="n">shard</span><span class="p" data-group-id="4966683571-11">]</span><span class="w">
+    </span><span class="p" data-group-id="4966683571-10">)</span><span class="w">
+  </span><span class="k" data-group-id="4966683571-9">end</span><span class="w">
+
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">handle_event</span><span class="p" data-group-id="4966683571-12">(</span><span class="ss">:READY</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="c">_shard</span><span class="p" data-group-id="4966683571-12">)</span><span class="w"> </span><span class="k" data-group-id="4966683571-13">do</span><span class="w">
+    </span><span class="nc">Logger</span><span class="o">.</span><span class="n">info</span><span class="p" data-group-id="4966683571-14">(</span><span class="s">&quot;Ready as </span><span class="si" data-group-id="4966683571-15">#{</span><span class="n">data</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="si" data-group-id="4966683571-15">}</span><span class="s">#</span><span class="si" data-group-id="4966683571-16">#{</span><span class="n">data</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">discriminator</span><span class="si" data-group-id="4966683571-16">}</span><span class="s"> (</span><span class="si" data-group-id="4966683571-17">#{</span><span class="n">data</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="si" data-group-id="4966683571-17">}</span><span class="s">)&quot;</span><span class="p" data-group-id="4966683571-14">)</span><span class="w">
+  </span><span class="k" data-group-id="4966683571-13">end</span><span class="w">
+
+  </span><span class="c1"># Ignore bots, like a good bot.</span><span class="w">
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">handle_event</span><span class="p" data-group-id="4966683571-18">(</span><span class="ss">:MESSAGE_CREATE</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="4966683571-19">%{</span><span class="ss">author</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="4966683571-20">%{</span><span class="ss">bot</span><span class="p">:</span><span class="w"> </span><span class="no">true</span><span class="p" data-group-id="4966683571-20">}</span><span class="p" data-group-id="4966683571-19">}</span><span class="p">,</span><span class="w"> </span><span class="c">_shard</span><span class="p" data-group-id="4966683571-18">)</span><span class="p">,</span><span class="w"> </span><span class="ss">do</span><span class="p">:</span><span class="w"> </span><span class="ss">:ok</span><span class="w">
+
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">handle_event</span><span class="p" data-group-id="4966683571-21">(</span><span class="ss">:MESSAGE_CREATE</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="4966683571-22">%{</span><span class="ss">channel_id</span><span class="p">:</span><span class="w"> </span><span class="n">channel_id</span><span class="p">,</span><span class="w"> </span><span class="ss">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;!ping&quot;</span><span class="p" data-group-id="4966683571-22">}</span><span class="p">,</span><span class="w"> </span><span class="c">_shard</span><span class="p" data-group-id="4966683571-21">)</span><span class="w"> </span><span class="k" data-group-id="4966683571-23">do</span><span class="w">
+    </span><span class="nc">MyApp.Rest</span><span class="o">.</span><span class="n">create_message</span><span class="p" data-group-id="4966683571-24">(</span><span class="n">channel_id</span><span class="p">,</span><span class="w"> </span><span class="ss">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Pong!&quot;</span><span class="p" data-group-id="4966683571-24">)</span><span class="w">
+  </span><span class="k" data-group-id="4966683571-23">end</span><span class="w">
+
+  </span><span class="c1"># Catch-all clause to avoid the process crashing on other events.</span><span class="w">
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">handle_event</span><span class="p" data-group-id="4966683571-25">(</span><span class="c">_type</span><span class="p">,</span><span class="w"> </span><span class="c">_data</span><span class="p">,</span><span class="w"> </span><span class="c">_shard</span><span class="p" data-group-id="4966683571-25">)</span><span class="p">,</span><span class="w"> </span><span class="ss">do</span><span class="p">:</span><span class="w"> </span><span class="ss">:ok</span><span class="w">
+</span><span class="k" data-group-id="4966683571-1">end</span></code></pre>      <footer class="footer">
+        <p>
+          <span class="line">
+            Built using
+            <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener">ExDoc</a> (v0.23.0) for the
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank">Elixir programming language</a>.
+          </span>
+          <span class="line">
+            Designed by
+            <a href="https://twitter.com/dignifiedquire" target="_blank" rel="noopener" title="@dignifiedquire">Friedel Ziegelmayer</a>.
+          </span>
+        </p>
+        <p>
+            <a href="api-reference.html" title="API reference" class="line footer-button">API Reference</a>
+          <button class="line footer-button display-shortcuts-help">
+            Display keyboard shortcuts
+          </button>
+          <button class="line footer-button night-mode-toggle">
+            Toggle night mode
+          </button>
+          <button class="line footer-button display-quick-switch">
+            Go to a HexDocs package
+          </button>
+          <button class="line footer-button tooltips-toggle">
+            <span class="tooltips-option-disable">Disable tooltips</span>
+            <span class="tooltips-option-enable">Enable tooltips</span>
+          </button>
+        </p>
+      </footer>
+    </div>
+  </div>
+</section>
+</div>
+  </body>
+</html>
