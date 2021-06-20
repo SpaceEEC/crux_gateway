@@ -145,7 +145,7 @@ defmodule Crux.Gateway.Connection do
     # In order to gracefully shutdown
     Process.flag(:trap_exit, true)
 
-    url = "#{url}/?v=8&encoding=etf&compress=zlib-stream"
+    url = "#{url}/?v=9&encoding=etf&compress=zlib-stream"
 
     {:ok, conn} = Gun.start_link(url)
 
