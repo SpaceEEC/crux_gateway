@@ -110,7 +110,7 @@ defmodule Crux.Gateway.Connection do
     }
   end
 
-  def callback_mode(), do: [:state_functions, :state_enter]
+  def callback_mode(), do: [:handle_event_function, :state_enter]
 
   def start_link(
         %{
@@ -165,6 +165,27 @@ defmodule Crux.Gateway.Connection do
     }
 
     {:ok, @waiting_hello, data}
+  end
+
+  #####
+  # handle_event
+  ###
+  # Workaround to get access to __STACKTRACE__
+  ####
+
+  # https://erlang.org/doc/man/gen_statem.html#type-state_enter_result
+  # https://erlang.org/doc/man/gen_statem.html#type-event_handler_result
+  def handle_event(type, content, state, data) do
+    apply(__MODULE__, state, [type, content, data])
+  catch
+    exception ->
+      stacktrace = __STACKTRACE__
+
+      Logger.error(fn ->
+        Exception.format(:error, exception, stacktrace)
+      end)
+
+      reraise exception, stacktrace
   end
 
   #####
