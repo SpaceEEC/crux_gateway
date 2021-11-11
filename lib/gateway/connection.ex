@@ -177,12 +177,20 @@ defmodule Crux.Gateway.Connection do
   # https://erlang.org/doc/man/gen_statem.html#type-event_handler_result
   def handle_event(type, content, state, data) do
     apply(__MODULE__, state, [type, content, data])
-  catch
+  rescue
     exception ->
       stacktrace = __STACKTRACE__
 
       Logger.error(fn ->
-        Exception.format(:error, exception, stacktrace)
+        """
+        #{Exception.format(:error, exception, stacktrace)}
+
+        Additional data:
+        type: #{inspect(type)}
+        content: #{inspect(content)}
+        state: #{inspect(state)}
+        data: #{inspect(data)}\
+        """
       end)
 
       reraise exception, stacktrace
