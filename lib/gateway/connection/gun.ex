@@ -84,6 +84,8 @@ defmodule Crux.Gateway.Connection.Gun do
   @connecting :connecting
   @connected :connected
 
+  @attempt_limit 5
+
   defstruct [
     :parent,
     :host,
@@ -93,6 +95,7 @@ defmodule Crux.Gateway.Connection.Gun do
     :zlib,
     :buffer,
     :conn,
+    :attempts,
     :expect_disconnect
   ]
 
@@ -109,6 +112,8 @@ defmodule Crux.Gateway.Connection.Gun do
            buffer: binary(),
            # WS connection wrapper process
            conn: pid() | nil,
+           # Limit the amount of attempts to establish a connection
+           attempts: non_neg_integer(),
            # Whether we are expecting a gun_down / disconnect
            # and do not want to notify the spawning process again
            expect_disconnect: boolean()
@@ -136,6 +141,7 @@ defmodule Crux.Gateway.Connection.Gun do
           zlib: nil,
           buffer: <<>>,
           conn: nil,
+          attempts: 0,
           expect_disconnect: false
         }
 
@@ -184,30 +190,54 @@ defmodule Crux.Gateway.Connection.Gun do
     z = Zlib.open()
     Zlib.inflateInit(z)
 
-    Logger.debug(fn -> "Starting a process to connect to #{data.host}:#{data.port}" end)
+    attempts = data.attempts + 1
+    data = %{data | attempts: attempts}
+
+    Logger.debug(fn ->
+      "Starting a process to connect to #{data.host}:#{data.port} (Attempt: #{attempts} / #{@attempt_limit})"
+    end)
 
     # > Gun does not currently support Websocket over HTTP/2.
     {:ok, conn} = Gun.open(data.host, data.port, %{protocols: [:http]})
 
     Logger.debug(fn -> "Process started, waiting for its connection to be up." end)
 
-    {:ok, :http} = Gun.await_up(conn)
+    conn
+    |> Gun.await_up()
+    |> case do
+      {:ok, :http} ->
+        Logger.debug(fn ->
+          "Connection is up, now upgrading it to use the WebSocket protocol, using " <>
+            data.path <> data.query
+        end)
 
-    Logger.debug(fn ->
-      "Connection is up, now upgrading it to use the WebSocket protocol, using " <>
-        data.path <> data.query
-    end)
+        stream_ref = Gun.ws_upgrade(conn, data.path <> data.query)
+        :ok = await_upgrade(conn, stream_ref)
 
-    stream_ref = Gun.ws_upgrade(conn, data.path <> data.query)
-    :ok = await_upgrade(conn, stream_ref)
+        Logger.debug(fn ->
+          "Connection upgraded to use the WebSocket protocol, we are good to go!"
+        end)
 
-    Logger.debug(fn -> "Connection upgraded to use the WebSocket protocol, we are good to go!" end)
+        send_connected(data)
 
-    send_connected(data)
+        data = %{data | conn: conn, zlib: z, attempts: 0}
 
-    data = %{data | conn: conn, zlib: z}
+        {:keep_state, data, {:timeout, 0, :connected}}
 
-    {:keep_state, data, {:timeout, 0, :connected}}
+      {:error, :timeout} when attempts >= @attempt_limit ->
+        Logger.error(fn ->
+          "Connection timed out, no attempts remaining, won't retry. (#{attempts} / #{@attempt_limit})"
+        end)
+
+        {:stop, :connection_failure, data}
+
+      {:error, :timeout} ->
+        Logger.warn(fn ->
+          "Connection timed out, will retry. (#{attempts} / #{@attempt_limit})"
+        end)
+
+        {:repeat_state, data}
+    end
   end
 
   def connecting(:timeout, :connected, data) do

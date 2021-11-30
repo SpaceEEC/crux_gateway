@@ -387,7 +387,8 @@ defmodule Crux.Gateway.Connection do
     end
   end
 
-  def terminate(:fatal_close_code, _state, data) do
+  def terminate(reason, _state, data)
+      when reason in [:fatal_close_code, :connection_failure] do
     Gateway.stop_shard(data.name, {data.shard_id, data.shard_count})
   end
 
@@ -470,6 +471,12 @@ defmodule Crux.Gateway.Connection do
 
   defp handle_common(_state, :info, {:disconnected, conn, _close_frame}, %{conn: conn} = data) do
     {:next_state, @disconnected, data, :postpone}
+  end
+
+  defp handle_common(_state, :info, {:EXIT, conn, :connection_failure}, %{conn: conn}) do
+    Logger.error(fn -> "Connection failed to establish connection, shutting down." end)
+
+    {:stop, :connection_failure}
   end
 
   defp handle_packet(packet, data)
