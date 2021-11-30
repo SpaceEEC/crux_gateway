@@ -395,8 +395,6 @@ defmodule Crux.Gateway.Connection do
     Logger.error(fn ->
       "#{inspect(reason)} #{inspect(state)} #{inspect(data)}"
     end)
-
-    Gateway.stop_shard(data.name, {data.shard_id, data.shard_count})
   end
 
   defp handle_common(state, type, message, data)
